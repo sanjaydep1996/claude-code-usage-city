@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Usage City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EEF1F7; --bg2: #DCE2EF; --ink: #0F172A; --dim: #5B6478; --card: rgba(255,255,255,.93); --line: #D5DBE7;
+    --ground: #F6F7FB; --lot: #E4E8F1; --road: #A3ABBC; --dash: #FFFFFF; --win: #CFE0FF; --winGlow: .1;
+    --shadow: 0 18px 50px rgba(15,23,42,.14); --accent: #2563EB;
+    --opus: #8B7CF6; --sonnet: #4F8DF7; --haiku: #22B07D; --fable: #E3A72F; --other: #94A3B8;
+    --in: #94A3B8; --out: #2563EB; --cw: #F59E0B; --cr: #22B07D;
+  }
+  :root[data-theme="dark"] {
+    --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.93); --line: #252F4D;
+    --ground: #141B33; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
+    --shadow: 0 18px 50px rgba(0,0,0,.5); --accent: #5B9BFF;
+    --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --other: #8C98B8;
+    --in: #8C98B8; --out: #5B9BFF; --cw: #F5C66B; --cr: #3DDC97;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.93); --line: #252F4D;
+      --ground: #141B33; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
+      --shadow: 0 18px 50px rgba(0,0,0,.5); --accent: #5B9BFF;
+      --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --other: #8C98B8;
+      --in: #8C98B8; --out: #5B9BFF; --cw: #F5C66B; --cr: #3DDC97;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); overflow: hidden;
+         background: radial-gradient(1200px 700px at 10% -10%, var(--bg2), transparent 60%), var(--bg); }
+  #stage { position: fixed; inset: 0; } #stage canvas { display: block; outline: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); backdrop-filter: blur(8px); }
+
+  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 800; } header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+  .spacer { flex: 1; }
+  .ctl { pointer-events: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 7px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--haiku); } .pill.sample .dot { background: var(--fable); }
+  .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+  .seg button { border: 0; background: none; padding: 6px 10px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 11px; font-size: 13px; font-weight: 700; }
+
+  #kpis { position: fixed; top: 74px; left: 18px; display: grid; grid-template-columns: repeat(3, auto); gap: 8px; z-index: 4; }
+  .kpi { padding: 10px 14px; min-width: 120px; }
+  .kpi b { display: block; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kpi span { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+
+  #legend { position: fixed; left: 18px; top: 236px; padding: 10px 14px; font-size: 12px; font-weight: 600; z-index: 4; display: grid; gap: 5px; }
+  #legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  #days { position: fixed; left: 18px; bottom: 18px; width: 420px; padding: 12px 14px; z-index: 4; }
+  #days h3, #tools h3 { margin: 0 0 8px; font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
+  #days svg { width: 100%; height: 70px; display: block; }
+  #tools { position: fixed; right: 18px; bottom: 18px; width: 300px; padding: 12px 14px; z-index: 4; }
+  .bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+  .bar .track { grid-column: 1 / -1; height: 6px; border-radius: 4px; background: var(--lot); overflow: hidden; }
+  .bar .track div { height: 100%; border-radius: 4px; background: var(--accent); }
+
+  #labels { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+  .tag { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; background: var(--card); border: 1px solid var(--line);
+         border-radius: 10px; padding: 4px 9px 5px; box-shadow: var(--shadow); white-space: nowrap; text-align: center; font-size: 12px; }
+  .tag b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; } .tag span { color: var(--dim); font-weight: 700; font-size: 11px; }
+  .tag.sel { border-color: var(--accent); outline: 2px solid var(--accent); }
+
+  #panel { position: fixed; top: 74px; right: 16px; bottom: 16px; width: 360px; padding: 18px; overflow-y: auto; z-index: 6; transform: translateX(120%); transition: transform .28s ease; }
+  #panel.open { transform: none; }
+  #panel .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  #panel h2 { margin: 0; font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+  #panel .close { background: none; border: 0; font-size: 22px; color: var(--dim); }
+  .fam { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+  .grid2 div { background: var(--lot); border-radius: 12px; padding: 10px 12px; }
+  .grid2 b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; } .grid2 span { font-size: 11px; color: var(--dim); font-weight: 700; text-transform: uppercase; }
+  .sec { margin-top: 14px; } .sec h4 { margin: 0 0 8px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+  .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--lot); }
+  .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 8px; font-size: 12px; font-weight: 600; }
+  .keys i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+  .note { margin-top: 14px; font-size: 11px; color: var(--dim); line-height: 1.45; }
+  #banner { position: fixed; top: 74px; left: 50%; transform: translateX(-50%); padding: 8px 14px; font-size: 13px; z-index: 7; display: none; border-color: var(--fable); }
+  #banner code { font-size: 12px; }
+
+  @media (max-width: 900px) {
+    #kpis { grid-template-columns: repeat(3, 1fr); left: 8px; right: 8px; top: 108px; } .kpi { min-width: 0; padding: 8px 10px; } .kpi b { font-size: 16px; }
+    #legend, #tools { display: none; } #days { left: 8px; right: 8px; width: auto; bottom: 8px; }
+    #panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; transform: translateY(120%); } #panel.open { transform: none; }
+    header p { display: none; }
+  }
+</style>
+<script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  } }
+</script>
+</head>
+<body>
+  <div id="stage" aria-label="3D city of your Claude Code usage. Each building is one project; taller means more usage."></div>
+  <div id="labels"></div>
+  <header>
+    <div><h1>Claude Code Usage City</h1><p id="sub">Each building is a project · taller = more usage</p></div>
+    <div class="spacer"></div>
+    <div class="ctl">
+      <span class="pill" id="source"><span class="dot"></span><span id="sourceText">Loading…</span></span>
+      <div class="seg" role="group" aria-label="Building height">
+        <button data-m="cost" aria-pressed="true">Cost</button><button data-m="tokens" aria-pressed="false">Tokens</button><button data-m="hours" aria-pressed="false">Hours</button>
+      </div>
+      <button class="btn" id="themeBtn" title="Switch light / dark">◐</button>
+    </div>
+  </header>
+  <div id="kpis"></div>
+  <div id="legend" class="card"></div>
+  <div id="banner" class="card"></div>
+  <section id="days" class="card"><h3><span>Last 30 days · cost per day</span><span id="peak"></span></h3><div id="daysChart"></div></section>
+  <section id="tools" class="card"><h3><span>Top tools</span><span id="toolTotal"></span></h3><div id="toolBars"></div></section>
+  <aside id="panel" class="card" aria-live="polite"></aside>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (s) => document.querySelector(s);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FAMS = ['opus', 'sonnet', 'haiku', 'fable', 'other'];
+const FAM_NAME = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', other: 'Other' };
+
+/* ---------- formatting ---------- */
+const money = (v) => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + v.toFixed(v < 10 ? 2 : 0);
+const big = (v) => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v));
+const hrs = (v) => v < 1 ? Math.round(v * 60) + ' min' : v.toFixed(1) + ' h';
+const sumTok = (t) => t.input + t.output + t.cacheWrite + t.cacheRead;
+const METRIC = { cost: { get: p => p.costUSD, fmt: money }, tokens: { get: p => sumTok(p.tokens), fmt: big }, hours: { get: p => p.activeHours, fmt: hrs } };
+let metric = 'cost';
+
+/* ---------- data ---------- */
+async function loadData() {
+  const order = [['./data/usage.json', false], ['./data/sample-usage.json', true]];
+  if (new URLSearchParams(location.search).has('sample')) order.reverse();   // ?sample shows the demo data even when you have your own
+  for (const [url, sample] of order) {
+    try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) { const d = await r.json(); d._sample = sample || d.mock; return d; } } catch {}
+  }
+  const b = $('#banner'); b.style.display = 'block';
+  b.innerHTML = 'Could not load data. Run <code>python3 collect.py</code>, then serve this folder: <code>python3 -m http.server</code>';
+  throw new Error('no data');
+}
+
+/* ---------- scene ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+$('#stage').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 400);
+camera.position.set(40, 34, 40);
+const controls = new OrbitControls(camera, renderer.domElement);
+Object.assign(controls, { enableDamping: true, enablePan: false, minZoom: .6, maxZoom: 3, minPolarAngle: .45, maxPolarAngle: 1.2, autoRotate: !reduceMotion, autoRotateSpeed: .3 });
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.1); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(20, 40, 12); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+scene.add(sun);
+
+const themed = [];
+const tmat = (v, o = {}) => { const m = new THREE.MeshStandardMaterial({ roughness: .85, ...o }); themed.push([m, v]); return m; };
+const M = { ground: tmat('--ground'), lot: tmat('--lot'), road: tmat('--road'), dash: tmat('--dash'),
+            win: tmat('--win', { emissive: 0xffffff, emissiveIntensity: .1, roughness: .2 }), winOff: tmat('--lot', { roughness: .4 }) };
+const FAM_MAT = Object.fromEntries(FAMS.map(f => [f, tmat('--' + f, { roughness: .55 })]));
+function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; (parent || scene).add(o); return o; }
+
+const CELL = 4.2;
+let B = [], cars = [], half = 10, data;
+
+function spiral(n) {   // grid cells from the centre outwards, so the biggest projects sit in the middle
+  const out = [[0, 0]]; let x = 0, z = 0, dx = 1, dz = 0, len = 1;
+  while (out.length < n) { for (let k = 0; k < 2 && out.length < n; k++) { for (let i = 0; i < len && out.length < n; i++) { x += dx; z += dz; out.push([x, z]); } [dx, dz] = [-dz, dx]; } len++; }
+  return out;
+}
+
+function buildCity() {
+  const P = data.projects.slice(0, 64), cells = spiral(P.length);
+  const r = Math.max(...cells.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z)))) + .5;
+  half = r * CELL + 2.5;
+  box(half * 2 + 2, 1, half * 2 + 2, M.ground, 0, -.5, 0);
+  for (let i = -r; i <= r; i++) {   // roads between the lots
+    const c = i * CELL; box(half * 2, .04, 1.1, M.road, 0, .02, c); box(1.1, .04, half * 2, M.road, c, .02, 0);
+  }
+  for (let i = -r; i <= r; i++) for (let k = -r + .5; k < r; k += 1) {
+    box(.7, .02, .1, M.dash, k * CELL, .05, i * CELL); box(.1, .02, .7, M.dash, i * CELL, .05, k * CELL);
+  }
+  const maxS = Math.max(...P.map(p => p.sessions), 1);
+  const now = Date.now();
+  P.forEach((p, i) => {
+    const [cx, cz] = cells[i], g = new THREE.Group(); g.position.set((cx + .5) * CELL, 0, (cz + .5) * CELL);
+    const w = 1.5 + 1.3 * Math.sqrt(p.sessions / maxS);
+    box(CELL - 1.3, .06, CELL - 1.3, M.lot, 0, .03, 0, g);
+    const body = new THREE.Group(); g.add(body);   // scaled in y to the chosen metric
+    const mat = FAM_MAT[FAMS.includes(p.family) ? p.family : 'other'].clone(); mat.userData.base = p.family;
+    const core = box(w, 1, w, mat, 0, .5, 0, body);
+    const recent = p.lastActive && (now - Date.parse(p.lastActive)) < 3 * 864e5;
+    const bands = [];   // window bands, spaced by real height in frame(); lit = active in the last 3 days
+    for (let k = 0; k < 12; k++) bands.push(box(w + .02, .14, w + .02, recent ? M.win : M.winOff, 0, 0, 0, body));
+    const roof = box(w * .5, .25, w * .5, mat, 0, 0, 0, g);
+    g.traverse(o => { if (o.isMesh) o.userData.pid = i; });
+    scene.add(g);
+    B.push({ p, g, body, roof, mat, w, bands, h: 1, target: 1 });
+  });
+  const tcalls = data.totals.toolCalls || 0, nCars = Math.min(40, Math.max(4, Math.round(tcalls / 150)));
+  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6'];
+  for (let i = 0; i < nCars; i++) {
+    const c = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: carColors[i % carColors.length], roughness: .6 });
+    box(.7, .32, .38, m, 0, .26, 0, c); box(.36, .22, .34, new THREE.MeshStandardMaterial({ color: 0xf4f6fb }), -.05, .5, 0, c);
+    const lane = (Math.floor(Math.random() * (2 * r + 1)) - r) * CELL, axis = i % 2;
+    scene.add(c); cars.push({ c, lane, axis, s: Math.random(), dir: i % 4 < 2 ? 1 : -1, v: .03 + Math.random() * .03 });
+  }
+  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, far: 120 }); sun.shadow.camera.updateProjectionMatrix();
+  setMetric(metric);
+}
+
+function setMetric(m) {
+  metric = m; document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+  const max = Math.max(...B.map(b => METRIC[m].get(b.p)), 1e-9);
+  for (const b of B) b.target = .35 + 13 * Math.sqrt(METRIC[m].get(b.p) / max);
+  if (reduceMotion) for (const b of B) b.h = b.target;
+  renderLabels(); renderPanel();
+}
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMetric(b.dataset.m));
+
+/* ---------- labels + side cards ---------- */
+const labelsEl = $('#labels'); let tags = [];
+function renderLabels() {
+  labelsEl.innerHTML = ''; tags = [];
+  const order = [...B].sort((a, b) => METRIC[metric].get(b.p) - METRIC[metric].get(a.p));
+  const shown = new Set(order.slice(0, innerWidth < 700 ? 3 : 5));
+  if (state.selected != null) shown.add(B[state.selected]); if (state.hover != null) shown.add(B[state.hover]);
+  for (const b of shown) {
+    const el = document.createElement('div'); el.className = 'tag' + (B.indexOf(b) === state.selected ? ' sel' : '');
+    el.innerHTML = `<span>${esc(b.p.name)}</span><b>${METRIC[metric].fmt(METRIC[metric].get(b.p))}</b>`;
+    el.onclick = (e) => { e.stopPropagation(); select(B.indexOf(b)); };
+    labelsEl.appendChild(el); tags.push([el, b]);
+  }
+}
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function renderSide() {
+  const t = data.totals, tk = t.tokens, all = sumTok(tk), cacheHit = all ? tk.cacheRead / (tk.input + tk.cacheRead + tk.cacheWrite) : 0;
+  const K = [[money(t.costUSD), 'API-equivalent'], [big(all), 'Tokens'], [hrs(t.activeHours), 'Active time'], [t.sessions, 'Sessions'], [big(t.toolCalls), 'Tool calls'], [(cacheHit * 100).toFixed(0) + '%', 'Cache hit']];
+  $('#kpis').innerHTML = K.map(([v, l]) => `<div class="kpi card"><b>${v}</b><span>${l}</span></div>`).join('');
+  const fams = Object.fromEntries(FAMS.map(f => [f, 0])); for (const p of data.projects) fams[FAMS.includes(p.family) ? p.family : 'other']++;
+  $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">Colour = main model</div>` +
+    FAMS.filter(f => fams[f]).map(f => `<div><i style="background:${css('--' + f)}"></i>${FAM_NAME[f]} · ${fams[f]}</div>`).join('') +
+    `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active in last 3 days</div>`;
+  const D = data.daily, mx = Math.max(...D.map(d => d.costUSD), 1e-9), W = 400, H = 70, bw = W / D.length;
+  const peak = D.reduce((a, d) => d.costUSD > a.costUSD ? d : a, D[0]);
+  $('#peak').textContent = peak ? 'peak ' + money(peak.costUSD) : '';
+  $('#daysChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cost per day">${D.map((d, i) => { const h = d.costUSD / mx * (H - 4);
+    return `<rect x="${i * bw + 1}" y="${H - h}" width="${bw - 2}" height="${Math.max(h, d.costUSD ? 2 : 1)}" rx="2" fill="${d.costUSD ? css('--accent') : css('--line')}"><title>${d.date}: ${money(d.costUSD)} · ${big(d.tokens)} tokens · ${d.sessions} sessions</title></rect>`; }).join('')}</svg>`;
+  const tmax = Math.max(...data.tools.map(t => t[1]), 1);
+  $('#toolTotal').textContent = big(t.toolCalls);
+  $('#toolBars').innerHTML = data.tools.slice(0, 7).map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`).join('');
+  $('#source').classList.toggle('sample', data._sample); $('#sourceText').textContent = data._sample ? 'Sample data' : 'Your data · ' + new Date(data.generatedAt).toLocaleDateString();
+  $('#sub').textContent = `Last ${data.rangeDays} days · ${data.projects.length} projects · taller = more usage`;
+}
+
+const state = { selected: null, hover: null };
+function renderPanel() {
+  const P = $('#panel');
+  if (state.selected == null) { P.classList.remove('open'); return; }
+  const p = B[state.selected].p, t = p.tokens, all = sumTok(t) || 1, fam = FAMS.includes(p.family) ? p.family : 'other';
+  const seg = [['input', 'Input', '--in'], ['output', 'Output', '--out'], ['cacheWrite', 'Cache write', '--cw'], ['cacheRead', 'Cache read', '--cr']];
+  const dmax = Math.max(...p.daily.map(d => d[2]), 1e-9);
+  const tmax = Math.max(...p.topTools.map(t => t[1]), 1);
+  P.innerHTML = `<div class="head"><h2>${esc(p.name)}</h2><button class="close" aria-label="Close">×</button></div>
+    <span class="fam" style="background:color-mix(in srgb, ${css('--' + fam)} 20%, transparent);color:${css('--' + fam)}">● Mostly ${FAM_NAME[fam]}</span>
+    <div class="grid2"><div><b>${money(p.costUSD)}</b><span>API-equivalent</span></div><div><b>${big(all)}</b><span>Tokens</span></div>
+      <div><b>${hrs(p.activeHours)}</b><span>Active time</span></div><div><b>${p.sessions}</b><span>Sessions</span></div></div>
+    <div class="sec"><h4>Where the tokens went</h4><div class="stack">${seg.map(([k, , v]) => `<div style="width:${t[k] / all * 100}%;background:${css(v)}"></div>`).join('')}</div>
+      <div class="keys">${seg.map(([k, l, v]) => `<span><i style="background:${css(v)}"></i>${l} ${big(t[k])}</span>`).join('')}</div></div>
+    <div class="sec"><h4>Cost per day</h4><svg viewBox="0 0 300 50" preserveAspectRatio="none" style="width:100%;height:50px">${p.daily.map((d, i) => { const h = d[2] / dmax * 46, bw = 300 / p.daily.length;
+      return `<rect x="${i * bw + .5}" y="${50 - h}" width="${bw - 1}" height="${Math.max(h, 1)}" rx="1.5" fill="${d[2] ? css('--' + fam) : css('--line')}"><title>${d[0]}: ${money(d[2])}</title></rect>`; }).join('')}</svg></div>
+    <div class="sec"><h4>Models</h4>${Object.entries(p.models).map(([m, c]) => `<div class="bar"><span>${esc(m)}</span><span>${money(c)}</span></div>`).join('')}</div>
+    <div class="sec"><h4>Top tools · ${big(p.toolCalls)} calls</h4>${p.topTools.map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${c}</span><div class="track"><div style="width:${c / tmax * 100}%;background:${css('--' + fam)}"></div></div></div>`).join('')}</div>
+    <div class="note">Last active ${p.lastActive ? new Date(p.lastActive).toLocaleString() : '—'}.<br>Cost is an API-list-price estimate (see pricing.json). Subscription plans aren't billed per token.</div>`;
+  P.querySelector('.close').onclick = () => select(null);
+  P.classList.add('open');
+}
+
+/* ---------- picking + camera ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+function hit(ev) {
+  const r = renderer.domElement.getBoundingClientRect(); ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -(ev.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ptr, camera); const h = ray.intersectObjects(B.map(b => b.g), true).find(x => x.object.userData.pid != null);
+  return h ? h.object.userData.pid : null;
+}
+let down = null;
+renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; controls.autoRotate = false; });
+renderer.domElement.addEventListener('pointerup', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) select(hit(e)); down = null; });
+renderer.domElement.addEventListener('pointermove', e => { const id = hit(e); if (id !== state.hover) { state.hover = id; renderer.domElement.style.cursor = id != null ? 'pointer' : ''; renderLabels(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') select(null); });
+
+const goal = { t: new THREE.Vector3(0, 2, 0), z: 1 };
+function select(i) {
+  state.selected = i ?? null;
+  if (state.selected != null) { const g = B[i].g.position; goal.t.set(g.x, B[i].target * .45, g.z); goal.z = 1.3; } else { goal.t.set(0, 2, 0); goal.z = 1; }
+  if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); }
+  renderLabels(); renderPanel();
+}
+
+/* ---------- theme ---------- */
+function isDark() { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+function retheme() {
+  for (const [m, v] of themed) m.color.set(css(v));
+  for (const b of B) b.mat.color.set(css('--' + (FAMS.includes(b.p.family) ? b.p.family : 'other')));
+  M.win.emissive.set(css('--win')); M.win.emissiveIntensity = parseFloat(css('--winGlow'));
+  sun.intensity = isDark() ? .6 : 1.5; hemi.intensity = isDark() ? .5 : 1.1;
+  if (data) { renderSide(); renderPanel(); }
+}
+$('#themeBtn').onclick = () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('ucity-theme', document.documentElement.dataset.theme); } catch {} retheme(); };
+try { const t = localStorage.getItem('ucity-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+
+/* ---------- loop ---------- */
+function resize() {
+  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .95, half * 1.45 / a);
+  Object.assign(camera, { left: -top * a, right: top * a, top, bottom: -top }); camera.updateProjectionMatrix(); renderer.setSize(w, h);
+}
+addEventListener('resize', resize);
+const clock = new THREE.Clock(), v = new THREE.Vector3();
+function frame() {
+  const dt = Math.min(clock.getDelta(), .05), k = reduceMotion ? 1 : 1 - Math.pow(.015, dt);
+  controls.target.lerp(goal.t, k); camera.zoom += (goal.z - camera.zoom) * k; camera.updateProjectionMatrix(); controls.update();
+  for (const [i, b] of B.entries()) {
+    b.h += (b.target - b.h) * (reduceMotion ? 1 : Math.min(1, dt * 3));
+    b.body.scale.y = b.h; b.roof.position.y = b.h + .12;
+    const n = Math.max(1, Math.min(12, Math.floor(b.h / 1.1)));
+    b.bands.forEach((band, k) => { band.visible = k < n; band.scale.y = 1 / b.h; band.position.y = (k + .7) / (n + .4); });
+    const hot = state.hover === i || state.selected === i; b.mat.emissive.set(hot ? b.mat.color : 0x000000); b.mat.emissiveIntensity = hot ? .25 : 0;
+  }
+  if (!reduceMotion) for (const c of cars) {
+    c.s = (c.s + c.v * dt * c.dir + 1) % 1; const a = -half + .5 + c.s * (half * 2 - 1);
+    if (c.axis) { c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a); c.c.rotation.y = c.dir > 0 ? -Math.PI / 2 : Math.PI / 2; }
+    else { c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28)); c.c.rotation.y = c.dir > 0 ? 0 : Math.PI; }
+  }
+  for (const [el, b] of tags) {
+    v.set(b.g.position.x, b.h + .9, b.g.position.z).project(camera);
+    el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
+  }
+  renderer.render(scene, camera); requestAnimationFrame(frame);
+}
+
+/* ---------- boot ---------- */
+data = await loadData();
+buildCity(); resize(); retheme(); renderSide(); frame();
+window.__city = { data, select, setMetric };
+</script>
+</body>
+</html>

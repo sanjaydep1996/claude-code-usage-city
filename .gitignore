@@ -1,0 +1,4 @@
+data/usage.json
+.DS_Store
+__pycache__/
+data/my-city.png
