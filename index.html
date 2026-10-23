@@ -48,16 +48,18 @@
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
 
   header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
-  header .brand { pointer-events: auto; cursor: pointer; }
+  header .brand, #campusSwitch, .ctl { pointer-events: auto; }
+  header .brand { cursor: pointer; }
+  #campusSwitch button { cursor: pointer; }
   header h1 { margin: 0; font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
   header h1 span.badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--accent); color: #fff; vertical-align: middle; }
   header p { margin: 2px 0 0; color: var(--dim); font-size: 12px; }
   .spacer { flex: 1; min-width: 8px; }
-  .ctl { pointer-events: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
   .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--haiku); } .pill.sample .dot { background: var(--fable); }
   .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .seg button { border: 0; background: none; padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); transition: all .15s ease; }
+  .seg button { border: 0; background: none; padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); transition: all .15s ease; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
   .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 11px; min-height: 34px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
   .btn:hover { border-color: var(--accent); }
