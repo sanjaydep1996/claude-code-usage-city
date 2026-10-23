@@ -1,0 +1,95 @@
+{
+  "version": "2026.1",
+  "last_updated": "2026-10-23",
+  "citation": "Based on Anthropic, OpenAI, and Google public model pricing and latency benchmarks (October 2026)",
+  "rules": [
+    {
+      "task_type": "regex_grep",
+      "recommended_tool": "Claude Code / Shell CLI",
+      "recommended_model": "Claude 3.5 Haiku / Gemini 1.5 Flash",
+      "fallback_model": "Claude 3.7 Sonnet",
+      "effort_tier": "Low (1-5 min)",
+      "token_budget_est": "1k - 4k tokens",
+      "cost_est_usd": "< $0.01",
+      "rationale": "Regex generation, grep scripts, and simple bash commands require minimal reasoning depth. Using Haiku or Flash cuts token cost by ~80% and responds with <800ms latency without quality degradation.",
+      "caveats": "If regex involves Unicode edge cases or high-performance backtracking security, review with a test suite."
+    },
+    {
+      "task_type": "unit_test",
+      "recommended_tool": "Claude Code / Cursor",
+      "recommended_model": "Claude 3.7 Sonnet",
+      "fallback_model": "Claude 3.5 Haiku",
+      "effort_tier": "Medium (10-30 min)",
+      "token_budget_est": "5k - 15k tokens",
+      "cost_est_usd": "$0.02 - $0.06",
+      "rationale": "Unit testing requires understanding parameter boundaries, mocking interfaces, and reproducing error states. Sonnet provides optimal balance of precise mocking without over-engineering.",
+      "caveats": "Always run test suite locally via `npm test` or `mvn test` to verify zero mock drift."
+    },
+    {
+      "task_type": "ui_component",
+      "recommended_tool": "Cursor / Claude Code",
+      "recommended_model": "Claude 3.7 Sonnet",
+      "fallback_model": "Gemini 1.5 Pro",
+      "effort_tier": "Medium (15-45 min)",
+      "token_budget_est": "8k - 20k tokens",
+      "cost_est_usd": "$0.03 - $0.08",
+      "rationale": "Modern UI components demand precise CSS/Tailwind layout, state synchronization, and WCAG accessibility standards. Sonnet produces clean, responsive JSX/TSX with proper ARIA attributes.",
+      "caveats": "Check responsiveness on mobile viewports (390x844) and verify contrast ratios."
+    },
+    {
+      "task_type": "api_endpoint",
+      "recommended_tool": "Claude Code",
+      "recommended_model": "Claude 3.7 Sonnet",
+      "fallback_model": "Claude 3.5 Haiku",
+      "effort_tier": "Medium (20-45 min)",
+      "token_budget_est": "10k - 25k tokens",
+      "cost_est_usd": "$0.04 - $0.10",
+      "rationale": "Backend endpoints require DTO validation, error handling, status code semantics (400 vs 422), and clean service layer delegation. Claude Code excels at following existing repo idioms.",
+      "caveats": "Ensure validation constraints (e.g. Bean Validation or Zod) are strictly asserted."
+    },
+    {
+      "task_type": "db_migration",
+      "recommended_tool": "Claude Code / Antigravity",
+      "recommended_model": "Claude 3.7 Sonnet / Claude 3.5 Sonnet",
+      "fallback_model": "Claude 3 Opus",
+      "effort_tier": "High Risk (Requires manual verify)",
+      "token_budget_est": "6k - 15k tokens",
+      "cost_est_usd": "$0.03 - $0.08",
+      "rationale": "Database schema migrations have high blast radius. AI should draft the SQL DDL, indexes, and rollback script, but never be applied without human review.",
+      "caveats": "NEVER allow AI to run `DROP TABLE` or `TRUNCATE` in production. Always verify backward compatibility (expand/contract pattern)."
+    },
+    {
+      "task_type": "refactor",
+      "recommended_tool": "Claude Code",
+      "recommended_model": "Claude 3.7 Sonnet",
+      "fallback_model": "Claude 3 Opus",
+      "effort_tier": "Medium to High",
+      "token_budget_est": "15k - 40k tokens",
+      "cost_est_usd": "$0.06 - $0.18",
+      "rationale": "Refactoring across multiple files benefits from Claude Code's project-wide grep and file edit tools. Prompt caching reduces cost on repeated file inspection.",
+      "caveats": "Commit all clean working changes to git before starting a refactoring session to enable instant rollback."
+    },
+    {
+      "task_type": "scaffold",
+      "recommended_tool": "Claude Code / DevCity Playbooks",
+      "recommended_model": "Claude 3.7 Sonnet",
+      "fallback_model": "Claude 3.5 Haiku",
+      "effort_tier": "Medium (15-30 min)",
+      "token_budget_est": "12k - 30k tokens",
+      "cost_est_usd": "$0.05 - $0.12",
+      "rationale": "Project scaffolding works best when following established production playbooks with explicit directory conventions and build files.",
+      "caveats": "Ensure `.gitignore` and `CLAUDE.md` are initialized immediately to prevent token bloat."
+    },
+    {
+      "task_type": "architecture_spec",
+      "recommended_tool": "Claude Code / Antigravity",
+      "recommended_model": "Claude 3.7 Sonnet / Claude 3 Opus",
+      "fallback_model": "Claude 3.7 Sonnet",
+      "effort_tier": "High Thinking (1-2 hours)",
+      "token_budget_est": "25k - 60k tokens",
+      "cost_est_usd": "$0.12 - $0.40",
+      "rationale": "System design, distributed transaction handling, and domain boundaries require deep chain-of-thought reasoning. Higher model capacity prevents subtle architectural anti-patterns.",
+      "caveats": "Document all trade-offs in an Architecture Decision Record (ADR) committed to version control."
+    }
+  ]
+}

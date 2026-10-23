@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "usage-city"
-version = "0.2.0"
+name = "devcity"
+version = "0.3.0"
 description = "DevCity: Personal AI developer tools observability cockpit and 3D city dashboard"
 readme = "README.md"
 license = { text = "MIT" }
@@ -19,8 +19,9 @@ agents = [
 ]
 
 [project.scripts]
-usage-city = "devcity.cli:main"
 devcity = "devcity.cli:main"
+usage-city = "devcity.cli:main"
+tokentown = "devcity.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/sanjaydep1996/claude-code-usage-city"
