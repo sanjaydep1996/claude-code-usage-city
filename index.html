@@ -178,11 +178,6 @@
         <button data-m="hours" aria-pressed="false">Hours</button>
         <button data-m="efficiency" aria-pressed="false" title="Prompt Cache Efficiency">Efficiency</button>
       </div>
-      <!-- Camera Perspective Control -->
-      <div class="seg" role="group" aria-label="Camera perspective" id="camPerspective">
-        <button data-cam="aerial" aria-pressed="true" title="Aerial Isometric View">🏙️ Aerial</button>
-        <button data-cam="street" aria-pressed="false" title="Street Level Ground View">🚶 Street</button>
-      </div>
       <button class="btn" id="shareBtn" title="Generate Shareable City Card">📸 Share Card</button>
       <button class="btn" id="tableBtn" title="View Accessible Table (Alt+T)">📋 Table</button>
       <button class="btn" id="themeBtn" title="Switch light / dark">◐</button>
@@ -266,7 +261,7 @@ const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
 camera.zoom = DEFAULT_ZOOM;
 const controls = new OrbitControls(camera, renderer.domElement);
-Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 6, minPolarAngle: .05, maxPolarAngle: 1.54, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
+Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 6, minPolarAngle: .35, maxPolarAngle: 1.25, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
 controls.addEventListener('start', () => { isAnimatingToGoal = false; controls.autoRotate = false; });
 controls.addEventListener('change', () => { if (!isAnimatingToGoal) { goal.t.copy(controls.target); goal.z = camera.zoom; } });
 const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.15); scene.add(hemi);
@@ -434,17 +429,6 @@ function buildCity() {
       box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, w / 2 - .04, fg);  // window 2
       box(w * .21, .03, .04, M.windowFrame, -w * .19, .34, w / 2 - .03, fg);     // sill frame 1
       box(w * .21, .03, .04, M.windowFrame, w * .19, .34, w / 2 - .03, fg);      // sill frame 2
-
-      // Ground Floor Street Entrance Canopy & Lobby Doors
-      if (f === 0) {
-        box(w * .38, .05, .28, M.windowFrame, 0, .82, w / 2 + .12, fg); // Entrance canopy
-        box(.04, .80, .04, M.windowFrame, -w * .17, .40, w / 2 + .22, fg); // Canopy pillar left
-        box(.04, .80, .04, M.windowFrame, w * .17, .40, w / 2 + .22, fg);  // Canopy pillar right
-        box(w * .28, .64, .02, M.windowGlass, 0, .36, w / 2 - .02, fg);   // Glass entrance lobby doors
-        box(.02, .64, .04, M.windowFrame, 0, .36, w / 2 - .02, fg);       // Center door mullion
-        box(.02, .12, .03, M.goldRing, -.04, .38, w / 2, fg);             // Door handle left
-        box(.02, .12, .03, M.goldRing, .04, .38, w / 2, fg);              // Door handle right
-      }
 
       // Back Solid Wall with 2 Punched Windows
       box(w, .28, .08, mat, 0, .20, -w / 2 + .04, fg);
@@ -726,41 +710,6 @@ document.querySelectorAll('#toolFilter button').forEach(b => {
   };
 });
 
-let camMode = 'aerial';
-function setCamView(mode) {
-  camMode = mode;
-  document.querySelectorAll('#camPerspective button').forEach(el => el.setAttribute('aria-pressed', el.dataset.cam === mode));
-  controls.autoRotate = false;
-  isAnimatingToGoal = true;
-  if (mode === 'street') {
-    if (state.selected != null) {
-      const g = B[state.selected].g.position;
-      goal.t.set(g.x, 0.8, g.z);
-      camera.position.set(g.x + 12, 1.8, g.z + 12);
-    } else {
-      goal.t.set(0, 0.8, 0);
-      camera.position.set(16, 2.0, 16);
-    }
-    goal.z = 2.4;
-  } else {
-    if (state.selected != null) {
-      const g = B[state.selected].g.position;
-      goal.t.set(g.x, B[state.selected].target * .45, g.z);
-      goal.z = 1.9;
-    } else {
-      goal.t.set(0, 1.8, 0);
-      goal.z = DEFAULT_ZOOM;
-    }
-    camera.position.set(40, 34, 40);
-  }
-  controls.target.copy(goal.t);
-  controls.update();
-  camera.updateProjectionMatrix();
-}
-document.querySelectorAll('#camPerspective button').forEach(b => {
-  b.onclick = () => setCamView(b.dataset.cam);
-});
-
 /* ---------- Floating Campus Labels (Image 1 style) ---------- */
 const labelsEl = $('#labels'); let tags = [];
 labelsEl.addEventListener('wheel', e => {
@@ -959,23 +908,11 @@ function select(i) {
   isAnimatingToGoal = true;
   if (state.selected != null) {
     const g = B[i].g.position;
-    if (camMode === 'street') {
-      goal.t.set(g.x, 0.8, g.z);
-      goal.z = 2.4;
-      camera.position.set(g.x + 12, 1.8, g.z + 12);
-    } else {
-      goal.t.set(g.x, B[i].target * .45, g.z);
-      goal.z = 1.9;
-    }
+    goal.t.set(g.x, B[i].target * .45, g.z);
+    goal.z = 1.9;
   } else {
-    if (camMode === 'street') {
-      goal.t.set(0, 0.8, 0);
-      goal.z = 2.2;
-      camera.position.set(16, 2.0, 16);
-    } else {
-      goal.t.set(0, 1.8, 0);
-      goal.z = DEFAULT_ZOOM;
-    }
+    goal.t.set(0, 1.8, 0);
+    goal.z = DEFAULT_ZOOM;
   }
   if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); isAnimatingToGoal = false; }
   renderLabels(); renderPanel();
