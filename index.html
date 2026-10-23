@@ -3,58 +3,75 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude Code Usage City</title>
+<title>DevCity · Personal AI Developer Cockpit</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #EEF1F7; --bg2: #DCE2EF; --ink: #0F172A; --dim: #5B6478; --card: rgba(255,255,255,.93); --line: #D5DBE7;
-    --ground: #F6F7FB; --lot: #E4E8F1; --road: #A3ABBC; --dash: #FFFFFF; --win: #CFE0FF; --winGlow: .1;
+    --bg: #EEF1F7; --bg2: #DCE2EF; --ink: #0F172A; --dim: #5B6478; --card: rgba(255,255,255,.94); --line: #D5DBE7;
+    --ground: #E4EAE2; --lot: #F3F5FA; --road: #CCD4E2; --dash: #FFFFFF; --win: #CFE0FF; --winGlow: .1;
     --shadow: 0 18px 50px rgba(15,23,42,.14); --accent: #2563EB;
-    --opus: #8B7CF6; --sonnet: #4F8DF7; --haiku: #22B07D; --fable: #E3A72F; --other: #94A3B8;
+    --opus: #8B7CF6; --sonnet: #4F8DF7; --haiku: #22B07D; --fable: #E3A72F; --gemini: #0EA5E9; --other: #94A3B8;
+    --leak: #D97706; --leakBg: #FEF3C7; --leakBorder: #F59E0B; --saved: #10B981;
     --in: #94A3B8; --out: #2563EB; --cw: #F59E0B; --cr: #22B07D;
+    --wall: #9D8FFF; --floor: #FFFFFF; --goldRing: #E5A83B;
   }
   :root[data-theme="dark"] {
-    --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.93); --line: #252F4D;
-    --ground: #141B33; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
+    --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.94); --line: #252F4D;
+    --ground: #16202C; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
     --shadow: 0 18px 50px rgba(0,0,0,.5); --accent: #5B9BFF;
-    --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --other: #8C98B8;
+    --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --gemini: #38BDF8; --other: #8C98B8;
+    --leak: #F59E0B; --leakBg: rgba(245,158,11,.15); --leakBorder: #F59E0B; --saved: #34D399;
     --in: #8C98B8; --out: #5B9BFF; --cw: #F5C66B; --cr: #3DDC97;
+    --wall: #6D63B5; --floor: #182036; --goldRing: #F5C66B;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.93); --line: #252F4D;
-      --ground: #141B33; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
+      --bg: #090D1A; --bg2: #131A33; --ink: #E8ECF6; --dim: #94A0BC; --card: rgba(16,22,42,.94); --line: #252F4D;
+      --ground: #16202C; --lot: #1B2443; --road: #262F4D; --dash: #4D587A; --win: #FFD98A; --winGlow: 1;
       --shadow: 0 18px 50px rgba(0,0,0,.5); --accent: #5B9BFF;
-      --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --other: #8C98B8;
+      --opus: #9D8FFF; --sonnet: #5B9BFF; --haiku: #3DDC97; --fable: #F5C66B; --gemini: #38BDF8; --other: #8C98B8;
+      --leak: #F59E0B; --leakBg: rgba(245,158,11,.15); --leakBorder: #F59E0B; --saved: #34D399;
       --in: #8C98B8; --out: #5B9BFF; --cw: #F5C66B; --cr: #3DDC97;
+      --wall: #6D63B5; --floor: #182036; --goldRing: #F5C66B;
     }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
-  body { font-family: Inter, system-ui, sans-serif; color: var(--ink); overflow: hidden;
+  body { font-family: Inter, system-ui, -apple-system, sans-serif; color: var(--ink); overflow: hidden;
          background: radial-gradient(1200px 700px at 10% -10%, var(--bg2), transparent 60%), var(--bg); }
   #stage { position: fixed; inset: 0; } #stage canvas { display: block; outline: none; }
   button { font: inherit; color: inherit; cursor: pointer; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); backdrop-filter: blur(8px); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
 
-  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: flex-start; gap: 10px; padding: 14px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
-  header h1 { margin: 0; font-size: 20px; font-weight: 800; } header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
-  .spacer { flex: 1; }
-  .ctl { pointer-events: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 7px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
+  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
+  header .brand { pointer-events: auto; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  header h1 span.badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--accent); color: #fff; vertical-align: middle; }
+  header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
+  .spacer { flex: 1; min-width: 10px; }
+  .ctl { pointer-events: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
   .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--haiku); } .pill.sample .dot { background: var(--fable); }
   .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
   .seg button { border: 0; background: none; padding: 6px 10px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); }
   .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 11px; font-size: 13px; font-weight: 700; }
+  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-height: 36px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--accent); }
 
-  #kpis { position: fixed; top: 74px; left: 18px; display: grid; grid-template-columns: repeat(3, auto); gap: 8px; z-index: 4; }
-  .kpi { padding: 10px 14px; min-width: 120px; }
-  .kpi b { display: block; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  /* Campus Breadcrumb when inside building (Image 2 style) */
+  #breadcrumbBar { position: fixed; top: 12px; left: 18px; display: none; align-items: center; gap: 10px; z-index: 8; pointer-events: auto; }
+  #breadcrumbBar button.back { background: var(--card); border: 1.5px solid var(--accent); color: var(--accent); font-weight: 800; font-size: 13px; border-radius: 10px; padding: 8px 14px; box-shadow: var(--shadow); }
+  #breadcrumbBar .crumb-title { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); }
+
+  #kpis { position: fixed; top: 70px; left: 18px; display: grid; grid-template-columns: repeat(3, auto); gap: 8px; z-index: 4; }
+  .kpi { padding: 9px 13px; min-width: 120px; }
+  .kpi b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .kpi span { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+  .kpi.leak { border-color: var(--leakBorder); } .kpi.leak b { color: var(--leak); }
 
-  #legend { position: fixed; left: 18px; top: 236px; padding: 10px 14px; font-size: 12px; font-weight: 600; z-index: 4; display: grid; gap: 5px; }
+  #legend { position: fixed; left: 18px; top: 250px; padding: 10px 14px; font-size: 12px; font-weight: 600; z-index: 4; display: grid; gap: 5px; }
   #legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 
   #days { position: fixed; left: 18px; bottom: 18px; width: 420px; padding: 12px 14px; z-index: 4; }
@@ -65,31 +82,56 @@
   .bar .track { grid-column: 1 / -1; height: 6px; border-radius: 4px; background: var(--lot); overflow: hidden; }
   .bar .track div { height: 100%; border-radius: 4px; background: var(--accent); }
 
+  /* Floating Campus Callout Tags (Image 1 style) */
   #labels { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
-  .tag { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; background: var(--card); border: 1px solid var(--line);
-         border-radius: 10px; padding: 4px 9px 5px; box-shadow: var(--shadow); white-space: nowrap; text-align: center; font-size: 12px; }
-  .tag b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; } .tag span { color: var(--dim); font-weight: 700; font-size: 11px; }
+  .tag { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; background: #FFFFFF; border: 1.5px solid #D1D5DB;
+         border-radius: 18px; padding: 6px 12px; box-shadow: 0 10px 25px rgba(0,0,0,.15); white-space: nowrap; font-size: 12px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 6px; transition: transform .15s ease, border-color .15s ease; }
+  .tag:hover { transform: translate(-50%, -108%) scale(1.04); }
+  .tag .icon { font-size: 10px; }
+  .tag.optimal { border-color: #D1D5DB; } .tag.optimal .icon { color: #10B981; }
+  .tag.warning { border-color: var(--goldRing); background: #FFFDF9; color: #92400E; } .tag.warning .icon { color: #D97706; }
   .tag.sel { border-color: var(--accent); outline: 2px solid var(--accent); }
 
-  #panel { position: fixed; top: 74px; right: 16px; bottom: 16px; width: 360px; padding: 18px; overflow-y: auto; z-index: 6; transform: translateX(120%); transition: transform .28s ease; }
+  /* Floating Interior Room Callout Pills (Image 2 style) */
+  .interior-pill { position: absolute; transform: translate(-50%, -100%); pointer-events: none; background: #FFFFFF; border: 1.5px solid #D1D5DB;
+                   border-radius: 18px; padding: 6px 12px; font-size: 12px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,.18); color: #111827; display: flex; align-items: center; gap: 6px; }
+  .interior-pill.warn { border-color: var(--goldRing); color: #92400E; background: #FFFDF9; }
+  .interior-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  #panel { position: fixed; top: 70px; right: 16px; bottom: 16px; width: 370px; padding: 18px; overflow-y: auto; z-index: 6; transform: translateX(120%); transition: transform .28s ease; }
   #panel.open { transform: none; }
   #panel .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  #panel h2 { margin: 0; font-size: 20px; font-weight: 800; overflow-wrap: anywhere; }
+  #panel h2 { margin: 0; font-size: 19px; font-weight: 800; overflow-wrap: anywhere; }
   #panel .close { background: none; border: 0; font-size: 22px; color: var(--dim); }
   .fam { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-top: 4px; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
-  .grid2 div { background: var(--lot); border-radius: 12px; padding: 10px 12px; }
-  .grid2 b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; } .grid2 span { font-size: 11px; color: var(--dim); font-weight: 700; text-transform: uppercase; }
-  .sec { margin-top: 14px; } .sec h4 { margin: 0 0 8px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+  .leak-banner { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: var(--leakBg); border: 1px solid var(--leakBorder); color: var(--leak); font-size: 12px; line-height: 1.4; font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+  .grid2 div { background: var(--lot); border-radius: 12px; padding: 9px 11px; }
+  .grid2 b { display: block; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; } .grid2 span { font-size: 11px; color: var(--dim); font-weight: 700; text-transform: uppercase; }
+  .sec { margin-top: 14px; } .sec h4 { margin: 0 0 8px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
   .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--lot); }
   .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 8px; font-size: 12px; font-weight: 600; }
   .keys i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+  .enter-btn { width: 100%; margin-top: 14px; padding: 12px; font-size: 13px; font-weight: 800; border-radius: 12px; background: var(--accent); color: #fff; border: 0; box-shadow: var(--shadow); transition: transform .15s ease, filter .15s ease; }
+  .enter-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
   .note { margin-top: 14px; font-size: 11px; color: var(--dim); line-height: 1.45; }
-  #banner { position: fixed; top: 74px; left: 50%; transform: translateX(-50%); padding: 8px 14px; font-size: 13px; z-index: 7; display: none; border-color: var(--fable); }
-  #banner code { font-size: 12px; }
+
+  /* Modern Native Dialog Styling (compliant with modern-web-guidance) */
+  dialog.native-dialog {
+    border: 1px solid var(--line); border-radius: 20px; background: var(--card);
+    box-shadow: 0 25px 60px rgba(0,0,0,.35); backdrop-filter: blur(12px);
+    color: var(--ink); padding: 24px; max-width: 900px; width: 92%; max-height: 88vh; overflow-y: auto;
+  }
+  dialog.native-dialog::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(5px); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-header h2 { margin: 0; font-size: 20px; font-weight: 800; }
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  table.data-table th, table.data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  table.data-table th { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  #shareCardCanvas { width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--line); display: block; margin: 0 auto 16px; box-shadow: var(--shadow); }
 
   @media (max-width: 900px) {
-    #kpis { grid-template-columns: repeat(3, 1fr); left: 8px; right: 8px; top: 108px; } .kpi { min-width: 0; padding: 8px 10px; } .kpi b { font-size: 16px; }
+    #kpis { grid-template-columns: repeat(3, 1fr); left: 8px; right: 8px; top: 112px; } .kpi { min-width: 0; padding: 6px 8px; } .kpi b { font-size: 15px; }
     #legend, #tools { display: none; } #days { left: 8px; right: 8px; width: auto; bottom: 8px; }
     #panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; transform: translateY(120%); } #panel.open { transform: none; }
     header p { display: none; }
@@ -103,25 +145,78 @@
 </script>
 </head>
 <body>
-  <div id="stage" aria-label="3D city of your Claude Code usage. Each building is one project; taller means more usage."></div>
+  <div id="stage" aria-label="3D city of your AI developer usage. Each building is one project; taller means more usage."></div>
   <div id="labels"></div>
-  <header>
-    <div><h1>Claude Code Usage City</h1><p id="sub">Each building is a project · taller = more usage</p></div>
+
+  <!-- Breadcrumb bar when zoomed inside a building (Image 2 style) -->
+  <div id="breadcrumbBar">
+    <button class="back" id="backBtn">← Campus</button>
+    <div class="crumb-title" id="crumbProjectTitle">
+      <span id="crumbName">Service</span>
+      <span class="pill" id="crumbStatus" style="padding:3px 8px;font-size:11px;">● Optimal</span>
+    </div>
+  </div>
+
+  <header id="mainHeader">
+    <div class="brand">
+      <h1>DevCity <span class="badge">v0.2</span></h1>
+      <p id="sub">Personal AI Developer Cockpit · Multi-Tool Observability</p>
+    </div>
     <div class="spacer"></div>
     <div class="ctl">
       <span class="pill" id="source"><span class="dot"></span><span id="sourceText">Loading…</span></span>
-      <div class="seg" role="group" aria-label="Building height">
-        <button data-m="cost" aria-pressed="true">Cost</button><button data-m="tokens" aria-pressed="false">Tokens</button><button data-m="hours" aria-pressed="false">Hours</button>
+      <!-- Source Filter Segmented Control -->
+      <div class="seg" role="group" aria-label="Filter Source Tool" id="toolFilter">
+        <button data-src="all" aria-pressed="true">All Tools</button>
+        <button data-src="claude-code" aria-pressed="false">Claude Code</button>
+        <button data-src="antigravity" aria-pressed="false">Antigravity</button>
       </div>
+      <!-- Metric Segmented Control -->
+      <div class="seg" role="group" aria-label="Building height metric">
+        <button data-m="cost" aria-pressed="true">Cost</button>
+        <button data-m="tokens" aria-pressed="false">Tokens</button>
+        <button data-m="hours" aria-pressed="false">Hours</button>
+        <button data-m="efficiency" aria-pressed="false" title="Prompt Cache Efficiency">Efficiency</button>
+      </div>
+      <!-- Camera Perspective Control -->
+      <div class="seg" role="group" aria-label="Camera perspective" id="camPerspective">
+        <button data-cam="aerial" aria-pressed="true" title="Aerial Isometric View">🏙️ Aerial</button>
+        <button data-cam="street" aria-pressed="false" title="Street Level Ground View">🚶 Street</button>
+      </div>
+      <button class="btn" id="shareBtn" title="Generate Shareable City Card">📸 Share Card</button>
+      <button class="btn" id="tableBtn" title="View Accessible Table (Alt+T)">📋 Table</button>
       <button class="btn" id="themeBtn" title="Switch light / dark">◐</button>
     </div>
   </header>
+
   <div id="kpis"></div>
   <div id="legend" class="card"></div>
-  <div id="banner" class="card"></div>
   <section id="days" class="card"><h3><span>Last 30 days · cost per day</span><span id="peak"></span></h3><div id="daysChart"></div></section>
   <section id="tools" class="card"><h3><span>Top tools</span><span id="toolTotal"></span></h3><div id="toolBars"></div></section>
   <aside id="panel" class="card" aria-live="polite"></aside>
+
+  <!-- Accessible Table Dialog (Modern Web Guidance native <dialog>) -->
+  <dialog class="native-dialog" id="tableModal" aria-label="Accessible Projects Table">
+    <div class="modal-header">
+      <h2>Accessible Projects Table</h2>
+      <button class="btn" id="closeTableBtn">Close (Esc)</button>
+    </div>
+    <div id="tableContainer"></div>
+  </dialog>
+
+  <!-- Social Share Card Dialog (Modern Web Guidance native <dialog>) -->
+  <dialog class="native-dialog" id="shareModal" style="max-width: 660px; text-align: center;" aria-label="Social Share Card Generator">
+    <div class="modal-header">
+      <h2>Share Your AI Dev City</h2>
+      <button class="btn" id="closeShareBtn">Close</button>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin:0 0 14px;">Anonymized by default. Perfect for X, LinkedIn, or GitHub.</p>
+    <canvas id="shareCardCanvas" width="1200" height="630"></canvas>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;">
+      <button class="btn" id="downloadCardBtn" style="background:var(--accent);color:#fff;">📥 Download PNG</button>
+      <button class="btn" id="copyCardBtn">📋 Copy to Clipboard</button>
+    </div>
+  </dialog>
 
 <script type="module">
 import * as THREE from 'three';
@@ -130,117 +225,554 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const $ = (s) => document.querySelector(s);
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const FAMS = ['opus', 'sonnet', 'haiku', 'fable', 'other'];
-const FAM_NAME = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', fable: 'Fable', other: 'Other' };
+const FAMS = ['opus', 'sonnet', 'haiku', 'gemini', 'fable', 'other'];
+const FAM_NAME = { opus: 'Opus', sonnet: 'Sonnet', haiku: 'Haiku', gemini: 'Gemini', fable: 'Fable', other: 'Other' };
 
 /* ---------- formatting ---------- */
-const money = (v) => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + v.toFixed(v < 10 ? 2 : 0);
-const big = (v) => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v));
-const hrs = (v) => v < 1 ? Math.round(v * 60) + ' min' : v.toFixed(1) + ' h';
-const sumTok = (t) => t.input + t.output + t.cacheWrite + t.cacheRead;
-const METRIC = { cost: { get: p => p.costUSD, fmt: money }, tokens: { get: p => sumTok(p.tokens), fmt: big }, hours: { get: p => p.activeHours, fmt: hrs } };
+const money = (v) => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + (v || 0).toFixed(v < 10 ? 2 : 0);
+const big = (v) => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v || 0));
+const hrs = (v) => v < 1 ? Math.round((v || 0) * 60) + ' min' : (v || 0).toFixed(1) + ' h';
+const sumTok = (t) => (t.input || 0) + (t.output || 0) + (t.cacheWrite || 0) + (t.cacheRead || 0);
+const METRIC = {
+  cost: { get: p => p.costUSD || 0, fmt: money },
+  tokens: { get: p => sumTok(p.tokens || {}), fmt: big },
+  hours: { get: p => p.activeHours || 0, fmt: hrs },
+  efficiency: { get: p => (p.cacheHitRate || 0) * 100, fmt: v => v.toFixed(0) + '%' }
+};
 let metric = 'cost';
+let activeSource = 'all';
+let viewMode = 'city'; // 'city' or 'interior'
+let interiorProjectIdx = null;
 
 /* ---------- data ---------- */
 async function loadData() {
   const order = [['./data/usage.json', false], ['./data/sample-usage.json', true]];
-  if (new URLSearchParams(location.search).has('sample')) order.reverse();   // ?sample shows the demo data even when you have your own
+  if (new URLSearchParams(location.search).has('sample')) order.reverse();
   for (const [url, sample] of order) {
     try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) { const d = await r.json(); d._sample = sample || d.mock; return d; } } catch {}
   }
-  const b = $('#banner'); b.style.display = 'block';
-  b.innerHTML = 'Could not load data. Run <code>python3 collect.py</code>, then serve this folder: <code>python3 -m http.server</code>';
   throw new Error('no data');
 }
 
 /* ---------- scene ---------- */
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('#stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 400);
+const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
 const controls = new OrbitControls(camera, renderer.domElement);
-Object.assign(controls, { enableDamping: true, enablePan: false, minZoom: .6, maxZoom: 3, minPolarAngle: .45, maxPolarAngle: 1.2, autoRotate: !reduceMotion, autoRotateSpeed: .3 });
-const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.1); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(20, 40, 12); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 5, minPolarAngle: .05, maxPolarAngle: 1.54, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.15); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 1.45); sun.position.set(22, 42, 14); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 scene.add(sun);
 
 const themed = [];
 const tmat = (v, o = {}) => { const m = new THREE.MeshStandardMaterial({ roughness: .85, ...o }); themed.push([m, v]); return m; };
-const M = { ground: tmat('--ground'), lot: tmat('--lot'), road: tmat('--road'), dash: tmat('--dash'),
-            win: tmat('--win', { emissive: 0xffffff, emissiveIntensity: .1, roughness: .2 }), winOff: tmat('--lot', { roughness: .4 }) };
+const M = {
+  ground: tmat('--ground'), lot: tmat('--lot'), road: tmat('--road'), dash: tmat('--dash'),
+  win: tmat('--win', { emissive: 0xffffff, emissiveIntensity: .1, roughness: .2 }), winOff: tmat('--lot', { roughness: .4 }),
+  goldRing: tmat('--goldRing', { roughness: .4, emissive: 0xf59e0b, emissiveIntensity: .3 }),
+  beacon: new THREE.MeshBasicMaterial({ color: 0xd97706 }),
+  treeWood: new THREE.MeshStandardMaterial({ color: 0x6B4F35, roughness: .9 }),
+  treeLeaf: new THREE.MeshStandardMaterial({ color: 0x2E6B43, roughness: .8 }),
+  personSkin: new THREE.MeshStandardMaterial({ color: 0xFAD0B0, roughness: .7 }),
+  personCoat: new THREE.MeshStandardMaterial({ color: 0xE8ECF6, roughness: .6 }),
+  personPants: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: .8 }),
+  interiorWall: tmat('--wall', { roughness: .7 }),
+  interiorFloor: tmat('--floor', { roughness: .5 }),
+  deskWood: new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: .6 }),
+  compScreen: new THREE.MeshBasicMaterial({ color: 0x38BDF8 }),
+  screenCode: new THREE.MeshBasicMaterial({ color: 0x34D399 }),
+  windowGlass: new THREE.MeshStandardMaterial({ color: 0xCFE0FF, transparent: true, opacity: 0.48, roughness: 0.15, metalness: 0.05, depthWrite: false }),
+  windowFrame: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 }),
+  coffeeCup: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.3 }),
+  whiteboard: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.2 }),
+  lampPost: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 }),
+  lampHead: new THREE.MeshStandardMaterial({ color: 0xFFFBEB, emissive: 0xFDE047, emissiveIntensity: 0.6, roughness: 0.2 }),
+  cloud: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.9, transparent: true, opacity: 0.85, flatShading: true })
+};
 const FAM_MAT = Object.fromEntries(FAMS.map(f => [f, tmat('--' + f, { roughness: .55 })]));
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; (parent || scene).add(o); return o; }
 
-const CELL = 4.2;
-let B = [], cars = [], half = 10, data;
+const CELL = 4.4;
+let B = [], cars = [], people = [], trees = [], streetLights = [], clouds = [], officeWorkers = [], cutawayWorkers = [], half = 10, data;
+let cityRoot = new THREE.Group(); scene.add(cityRoot);
+let interiorRoot = new THREE.Group(); scene.add(interiorRoot); interiorRoot.visible = false;
 
-function spiral(n) {   // grid cells from the centre outwards, so the biggest projects sit in the middle
+function spiral(n) {
   const out = [[0, 0]]; let x = 0, z = 0, dx = 1, dz = 0, len = 1;
   while (out.length < n) { for (let k = 0; k < 2 && out.length < n; k++) { for (let i = 0; i < len && out.length < n; i++) { x += dx; z += dz; out.push([x, z]); } [dx, dz] = [-dz, dx]; } len++; }
   return out;
 }
 
+/* ---------- Low-poly Pine Trees (Image 1 style) ---------- */
+function createTree(x, z) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(.14, .45, .14, M.treeWood, 0, .22, 0, g);
+  const cone1 = new THREE.Mesh(new THREE.ConeGeometry(.45, .65, 5), M.treeLeaf);
+  cone1.position.set(0, .65, 0); cone1.castShadow = true; g.add(cone1);
+  const cone2 = new THREE.Mesh(new THREE.ConeGeometry(.32, .55, 5), M.treeLeaf);
+  cone2.position.set(0, .98, 0); cone2.castShadow = true; g.add(cone2);
+  cityRoot.add(g); trees.push(g);
+}
+
+/* ---------- Low-poly Animated People (Image 1 style) ---------- */
+function createPerson(lane, pathAxis = 0, dir = 1) {
+  const p = new THREE.Group();
+  const torso = box(.22, .32, .16, M.personCoat, 0, .28, 0, p);
+  const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+  const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+  const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+
+  cityRoot.add(p);
+  people.push({ p, torso, head, leg1, leg2, lane, pathAxis, dir, v: .016 + Math.random() * .014, s: Math.random() });
+}
+
+/* ---------- Street Lights (Lampposts) ---------- */
+function createStreetLight(x, z, dirX = 1, dirZ = 0) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(.08, 1.4, .08, M.lampPost, 0, .7, 0, g);
+  const armLen = .38;
+  box(dirX ? armLen : .06, .06, dirZ ? armLen : .06, M.lampPost, dirX * armLen / 2, 1.37, dirZ * armLen / 2, g);
+  const head = box(.16, .10, .14, M.lampHead, dirX * armLen, 1.32, dirZ * armLen, g);
+  cityRoot.add(g);
+  streetLights.push({ g, head });
+}
+
+/* ---------- Low-poly Fluffy Clouds ---------- */
+function createCloud(x, y, z, scale = 1, speed = 0.4) {
+  const cg = new THREE.Group(); cg.position.set(x, y, z);
+  box(2.8 * scale, .7 * scale, 1.5 * scale, M.cloud, 0, 0, 0, cg);
+  box(1.8 * scale, .6 * scale, 1.2 * scale, M.cloud, .9 * scale, .2 * scale, .2 * scale, cg);
+  box(1.7 * scale, .6 * scale, 1.1 * scale, M.cloud, -.9 * scale, .1 * scale, -.1 * scale, cg);
+  box(1.4 * scale, .5 * scale, 1.0 * scale, M.cloud, .2 * scale, .4 * scale, 0, cg);
+  cityRoot.add(cg);
+  clouds.push({ cg, speed, startY: y, phase: Math.random() * 10 });
+}
+
+/* ---------- Build Full City Campus ---------- */
 function buildCity() {
   const P = data.projects.slice(0, 64), cells = spiral(P.length);
-  const r = Math.max(...cells.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z)))) + .5;
-  half = r * CELL + 2.5;
-  box(half * 2 + 2, 1, half * 2 + 2, M.ground, 0, -.5, 0);
-  for (let i = -r; i <= r; i++) {   // roads between the lots
-    const c = i * CELL; box(half * 2, .04, 1.1, M.road, 0, .02, c); box(1.1, .04, half * 2, M.road, c, .02, 0);
+  const maxCoord = Math.max(...cells.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z))));
+  const intR = maxCoord + 1;
+  half = (intR + .6) * CELL;
+
+  box(half * 2 + 4, 1, half * 2 + 4, M.ground, 0, -.5, 0, cityRoot);
+
+  // Roads positioned strictly along grid lines between building blocks
+  for (let i = -intR; i <= intR; i++) {
+    const c = i * CELL;
+    box(half * 2, .04, 1.2, M.road, 0, .02, c, cityRoot);
+    box(1.2, .04, half * 2, M.road, c, .02, 0, cityRoot);
   }
-  for (let i = -r; i <= r; i++) for (let k = -r + .5; k < r; k += 1) {
-    box(.7, .02, .1, M.dash, k * CELL, .05, i * CELL); box(.1, .02, .7, M.dash, i * CELL, .05, k * CELL);
+  for (let i = -intR; i <= intR; i++) {
+    for (let k = -intR; k < intR; k++) {
+      box(.7, .02, .1, M.dash, (k + .5) * CELL, .05, i * CELL, cityRoot);
+      box(.1, .02, .7, M.dash, i * CELL, .05, (k + .5) * CELL, cityRoot);
+    }
   }
-  const maxS = Math.max(...P.map(p => p.sessions), 1);
+
+  // Plant Pine Trees in courtyard areas between lots (never on roads or inside buildings)
+  trees = [];
+  for (let i = -intR; i <= intR; i++) {
+    for (let j = -intR; j <= intR; j++) {
+      if (Math.random() > 0.45) {
+        createTree(i * CELL + 1.25, j * CELL + 1.25);
+      }
+    }
+  }
+
+  const maxS = Math.max(...P.map(p => p.sessions || 1), 1);
   const now = Date.now();
+
+  officeWorkers = [];
   P.forEach((p, i) => {
     const [cx, cz] = cells[i], g = new THREE.Group(); g.position.set((cx + .5) * CELL, 0, (cz + .5) * CELL);
-    const w = 1.5 + 1.3 * Math.sqrt(p.sessions / maxS);
-    box(CELL - 1.3, .06, CELL - 1.3, M.lot, 0, .03, 0, g);
-    const body = new THREE.Group(); g.add(body);   // scaled in y to the chosen metric
-    const mat = FAM_MAT[FAMS.includes(p.family) ? p.family : 'other'].clone(); mat.userData.base = p.family;
-    const core = box(w, 1, w, mat, 0, .5, 0, body);
+    const w = 1.6 + 1.2 * Math.sqrt((p.sessions || 1) / maxS);
+    box(CELL - 1.2, .06, CELL - 1.2, M.lot, 0, .03, 0, g);
+
+    // Glowing selection ring on lot (Image 1 style)
+    const ringGeo = new THREE.RingGeometry(w * .75, w * .75 + .12, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    const selRing = new THREE.Mesh(ringGeo, M.goldRing);
+    selRing.position.set(0, .07, 0); selRing.visible = false; g.add(selRing);
+
+    const fam = FAMS.includes(p.family) ? p.family : 'other';
+    const mat = (FAM_MAT[fam] || FAM_MAT.other).clone(); mat.userData.base = p.family;
+
+    const FH = 1.05; // Floor height
+    const maxFloors = 10;
+    const floors = [];
     const recent = p.lastActive && (now - Date.parse(p.lastActive)) < 3 * 864e5;
-    const bands = [];   // window bands, spaced by real height in frame(); lit = active in the last 3 days
-    for (let k = 0; k < 12; k++) bands.push(box(w + .02, .14, w + .02, recent ? M.win : M.winOff, 0, 0, 0, body));
-    const roof = box(w * .5, .25, w * .5, mat, 0, 0, 0, g);
+
+    for (let f = 0; f < maxFloors; f++) {
+      const fg = new THREE.Group(); fg.position.set(0, f * FH, 0); g.add(fg);
+
+      // Floor slab & Ceiling slab
+      box(w + .04, .06, w + .04, M.lot, 0, .03, 0, fg);
+      box(w + .04, .06, w + .04, M.lot, 0, FH - .03, 0, fg);
+
+      // Central elevator & utility core
+      box(w * .36, FH - .06, w * .36, mat, 0, FH / 2, 0, fg);
+
+      const h_win = .50, y_win = .58;
+
+      // Front Solid Wall with 2 Punched Windows
+      box(w, .28, .08, mat, 0, .20, w / 2 - .04, fg); // bottom sill
+      box(w, .18, .08, mat, 0, .93, w / 2 - .04, fg); // top header
+      box(w * .22, h_win, .08, mat, -w * .39, y_win, w / 2 - .04, fg); // left pier
+      box(w * .22, h_win, .08, mat, w * .39, y_win, w / 2 - .04, fg);  // right pier
+      box(w * .16, h_win, .08, mat, 0, y_win, w / 2 - .04, fg);        // center pier
+      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, w / 2 - .04, fg); // window 1
+      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, w / 2 - .04, fg);  // window 2
+      box(w * .21, .03, .04, M.windowFrame, -w * .19, .34, w / 2 - .03, fg);     // sill frame 1
+      box(w * .21, .03, .04, M.windowFrame, w * .19, .34, w / 2 - .03, fg);      // sill frame 2
+
+      // Ground Floor Street Entrance Canopy & Lobby Doors
+      if (f === 0) {
+        box(w * .38, .05, .28, M.windowFrame, 0, .82, w / 2 + .12, fg); // Entrance canopy
+        box(.04, .80, .04, M.windowFrame, -w * .17, .40, w / 2 + .22, fg); // Canopy pillar left
+        box(.04, .80, .04, M.windowFrame, w * .17, .40, w / 2 + .22, fg);  // Canopy pillar right
+        box(w * .28, .64, .02, M.windowGlass, 0, .36, w / 2 - .02, fg);   // Glass entrance lobby doors
+        box(.02, .64, .04, M.windowFrame, 0, .36, w / 2 - .02, fg);       // Center door mullion
+        box(.02, .12, .03, M.goldRing, -.04, .38, w / 2, fg);             // Door handle left
+        box(.02, .12, .03, M.goldRing, .04, .38, w / 2, fg);              // Door handle right
+      }
+
+      // Back Solid Wall with 2 Punched Windows
+      box(w, .28, .08, mat, 0, .20, -w / 2 + .04, fg);
+      box(w, .18, .08, mat, 0, .93, -w / 2 + .04, fg);
+      box(w * .22, h_win, .08, mat, -w * .39, y_win, -w / 2 + .04, fg);
+      box(w * .22, h_win, .08, mat, w * .39, y_win, -w / 2 + .04, fg);
+      box(w * .16, h_win, .08, mat, 0, y_win, -w / 2 + .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, -w / 2 + .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, -w / 2 + .04, fg);
+      box(w * .21, .03, .04, M.windowFrame, -w * .19, .34, -w / 2 + .03, fg);
+      box(w * .21, .03, .04, M.windowFrame, w * .19, .34, -w / 2 + .03, fg);
+
+      // Left Solid Wall with 2 Punched Windows
+      box(.08, .28, w, mat, -w / 2 + .04, .20, 0, fg);
+      box(.08, .18, w, mat, -w / 2 + .04, .93, 0, fg);
+      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, w * .39, fg);
+      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, -w * .39, fg);
+      box(.08, h_win, w * .16, mat, -w / 2 + .04, y_win, 0, fg);
+      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, w * .19, fg);
+      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, -w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, -w / 2 + .03, .34, w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, -w / 2 + .03, .34, -w * .19, fg);
+
+      // Right Solid Wall with 2 Punched Windows
+      box(.08, .28, w, mat, w / 2 - .04, .20, 0, fg);
+      box(.08, .18, w, mat, w / 2 - .04, .93, 0, fg);
+      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, w * .39, fg);
+      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, -w * .39, fg);
+      box(.08, h_win, w * .16, mat, w / 2 - .04, y_win, 0, fg);
+      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, w * .19, fg);
+      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, -w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, -w * .19, fg);
+
+      // Busy Office Workstation (framed directly behind left window)
+      box(w * .38, .24, .24, M.deskWood, -w * .19, .18, w * .20, fg);
+      box(.20, .16, .03, (f + i) % 2 === 0 ? M.compScreen : M.screenCode, -w * .19, .38, w * .20 - .06, fg);
+
+      // Seated developer typing busily
+      box(.13, .18, .10, M.personCoat, -w * .19, .22, w * .20 + .12, fg);
+      const head = box(.10, .10, .10, M.personSkin, -w * .19, .36, w * .20 + .12, fg);
+      const armL = box(.04, .12, .04, M.personCoat, -w * .19 - .07, .24, w * .20 + .06, fg);
+      const armR = box(.04, .12, .04, M.personCoat, -w * .19 + .07, .24, w * .20 + .06, fg);
+      officeWorkers.push({ type: 'typing', head, armL, armR, seed: Math.random() * 10, floor: fg });
+
+      // Walking developer moving along office corridor holding coffee (framed behind right window)
+      const wg = new THREE.Group(); wg.position.set(w * .19, .06, 0); fg.add(wg);
+      box(.13, .22, .10, M.personCoat, 0, .20, 0, wg);
+      box(.10, .10, .10, M.personSkin, 0, .36, 0, wg);
+      box(.05, .06, .05, M.coffeeCup, .09, .22, .06, wg);
+      const leg1 = box(.05, .15, .06, M.personPants, -.04, .07, 0, wg);
+      const leg2 = box(.05, .15, .06, M.personPants, .04, .07, 0, wg);
+      officeWorkers.push({ type: 'walking', group: wg, leg1, leg2, range: w * .18, speed: .6 + Math.random() * .4, t: Math.random(), floor: fg });
+
+      // Brainstorming developer at whiteboard on alternate floors (visible through rear windows)
+      if (f % 2 === 1) {
+        box(w * .35, .36, .02, M.whiteboard, -w * .19, .38, -w * .20, fg);
+        const sg = new THREE.Group(); sg.position.set(-w * .19, .06, -w * .10); fg.add(sg);
+        box(.13, .22, .10, M.personPants, 0, .20, 0, sg);
+        const gHead = box(.10, .10, .10, M.personSkin, 0, .36, 0, sg);
+        const gArm = box(.04, .14, .04, M.personCoat, -.08, .24, 0, sg);
+        officeWorkers.push({ type: 'gesturing', head: gHead, arm: gArm, seed: Math.random() * 10, floor: fg });
+      }
+
+      fg.visible = false;
+      floors.push(fg);
+    }
+
+    const roof = box(w * .55, .28, w * .55, mat, 0, 0, 0, g);
+    box(w * .35, .16, w * .35, M.lot, 0, .20, 0, roof);
+
+    // Cache leak pulsing antenna
+    let beacon = null;
+    if (p.cacheLeak) {
+      beacon = new THREE.Mesh(new THREE.SphereGeometry(.24, 8, 8), M.beacon);
+      beacon.position.set(0, .38, 0);
+      roof.add(beacon);
+    }
+
     g.traverse(o => { if (o.isMesh) o.userData.pid = i; });
-    scene.add(g);
-    B.push({ p, g, body, roof, mat, w, bands, h: 1, target: 1 });
+    cityRoot.add(g);
+    B.push({ p, g, roof, mat, w, floors, FH, beacon, selRing, h: 1, target: 1 });
   });
-  const tcalls = data.totals.toolCalls || 0, nCars = Math.min(40, Math.max(4, Math.round(tcalls / 150)));
-  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6'];
+
+  // Spawn Streetlights along sidewalk curbs
+  streetLights = [];
+  for (let i = -intR; i <= intR; i++) {
+    for (let j = -intR; j <= intR; j++) {
+      if ((i + j) % 2 === 0) {
+        createStreetLight(i * CELL + .65, j * CELL + .65, 1, 0);
+        createStreetLight(i * CELL - .65, j * CELL - .65, -1, 0);
+      }
+    }
+  }
+
+  // Spawn Low-Poly Fluffy Clouds drifting in the sky
+  clouds = [];
+  const cloudPositions = [
+    [-half * 1.3, 16, -half * 0.8, 1.1, 0.45],
+    [-half * 0.4, 18, -half * 0.2, 1.3, 0.35],
+    [half * 0.3, 17, -half * 0.9, 0.9, 0.5],
+    [-half * 0.9, 15, half * 0.4, 1.2, 0.4],
+    [half * 0.1, 19, half * 0.2, 1.4, 0.3],
+    [half * 0.8, 16, half * 0.7, 1.0, 0.48],
+    [-half * 0.2, 17, half * 0.9, 1.2, 0.38],
+    [half * 1.1, 18, -half * 0.4, 1.1, 0.42]
+  ];
+  cloudPositions.forEach(([x, y, z, sc, sp]) => createCloud(x, y, z, sc, sp));
+
+  // Spawn Walking People strictly along sidewalk corridors (outside road lanes and outside buildings)
+  people = [];
+  for (let i = 0; i < 22; i++) {
+    const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
+    const side = (i % 2 === 0) ? .72 : -.72; // Sidewalk buffer
+    const lane = roadIdx * CELL + side;
+    const axis = (i % 4 < 2) ? 1 : 0;
+    const dir = (i % 3 === 0) ? -1 : 1;
+    createPerson(lane, axis, dir);
+  }
+
+  // Spawn Moving Cars strictly on asphalt road lanes
+  cars = [];
+  const tcalls = (data.totals && data.totals.toolCalls) || 0;
+  const nCars = Math.min(24, Math.max(4, Math.round(tcalls / 200)));
+  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6', '#0EA5E9'];
   for (let i = 0; i < nCars; i++) {
     const c = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: carColors[i % carColors.length], roughness: .6 });
     box(.7, .32, .38, m, 0, .26, 0, c); box(.36, .22, .34, new THREE.MeshStandardMaterial({ color: 0xf4f6fb }), -.05, .5, 0, c);
-    const lane = (Math.floor(Math.random() * (2 * r + 1)) - r) * CELL, axis = i % 2;
-    scene.add(c); cars.push({ c, lane, axis, s: Math.random(), dir: i % 4 < 2 ? 1 : -1, v: .03 + Math.random() * .03 });
+    const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
+    const lane = roadIdx * CELL;
+    const axis = i % 2;
+    cityRoot.add(c);
+    cars.push({ c, lane, axis, s: Math.random(), dir: i % 4 < 2 ? 1 : -1, v: .026 + Math.random() * .024 });
   }
-  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, far: 120 }); sun.shadow.camera.updateProjectionMatrix();
-  setMetric(metric);
+
+  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, far: 140 }); sun.shadow.camera.updateProjectionMatrix();
+  applyFilters();
+}
+
+/* ---------- Build Inside Building Cutaway View (Image 2 style) ---------- */
+let interiorPills = [];
+let interiorPillsPositions = [];
+function buildInteriorCutaway(project) {
+  while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
+  interiorPills.forEach(el => el.remove()); interiorPills = [];
+
+  const t = project.tokens || {};
+  const fam = FAMS.includes(project.family) ? project.family : 'other';
+
+  // Base platform floor
+  box(14, .6, 11, M.lot, 0, -.3, 0, interiorRoot);
+
+  // 4 Compartments / Rooms with half-height walls (matching Image 2)
+  const WALL_H = 1.8, THICK = .28;
+
+  // Outer walls
+  box(14, WALL_H, THICK, M.interiorWall, 0, WALL_H / 2, -5.35, interiorRoot); // Back
+  box(THICK, WALL_H, 11, M.interiorWall, -6.85, WALL_H / 2, 0, interiorRoot); // Left
+  box(THICK, WALL_H, 11, M.interiorWall, 6.85, WALL_H / 2, 0, interiorRoot);  // Right
+  // Front half walls with entrance corridor opening
+  box(5.5, WALL_H, THICK, M.interiorWall, -4.1, WALL_H / 2, 5.35, interiorRoot);
+  box(5.5, WALL_H, THICK, M.interiorWall, 4.1, WALL_H / 2, 5.35, interiorRoot);
+
+  // Cross divider partitions
+  box(13.6, WALL_H, THICK, M.interiorWall, 0, WALL_H / 2, 0, interiorRoot); // Middle horizontal
+  box(THICK, WALL_H, 10.6, M.interiorWall, 0, WALL_H / 2, 0, interiorRoot); // Middle vertical
+
+  // Circular accent rugs in rooms
+  function addRug(x, z, r = 1.8) {
+    const geo = new THREE.RingGeometry(r - .15, r, 32); geo.rotateX(-Math.PI / 2);
+    const m = new THREE.Mesh(geo, M.goldRing); m.position.set(x, .03, z); interiorRoot.add(m);
+  }
+  addRug(-3.4, -2.6, 2.0); addRug(3.4, -2.6, 2.0); addRug(-3.4, 2.6, 2.0); addRug(3.4, 2.6, 2.0);
+
+  cutawayWorkers = [];
+  // Room 1 (Top-Left): "Prompt Cache Vault" (Workstations with typing coders + courier)
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 2; c++) {
+      const dx = -4.5 + c * 2.2, dz = -3.8 + r * 1.8;
+      box(1.2, .65, .55, M.deskWood, dx, .33, dz, interiorRoot);
+      box(.4, .3, .05, M.compScreen, dx, .8, dz - .15, interiorRoot);
+      box(.2, .26, .16, M.personCoat, dx, .45, dz + .35, interiorRoot);
+      const head = box(.15, .15, .15, M.personSkin, dx, .65, dz + .35, interiorRoot);
+      const armL = box(.06, .16, .06, M.personCoat, dx - .12, .48, dz + .2, interiorRoot);
+      const armR = box(.06, .16, .06, M.personCoat, dx + .12, .48, dz + .2, interiorRoot);
+      cutawayWorkers.push({ type: 'typing', head, armL, armR, seed: dx * 2 });
+    }
+  }
+  // Cache courier carrying files between server racks in Room 1
+  const cw1 = new THREE.Group(); cw1.position.set(-3.2, 0, -2.2); interiorRoot.add(cw1);
+  box(.22, .32, .16, M.personCoat, 0, .28, 0, cw1);
+  box(.16, .16, .16, M.personSkin, 0, .52, 0, cw1);
+  box(.14, .12, .10, M.deskWood, .15, .32, .10, cw1);
+  const cw1Leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, cw1);
+  const cw1Leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, cw1);
+  cutawayWorkers.push({ type: 'walking', group: cw1, leg1: cw1Leg1, leg2: cw1Leg2, baseZ: -2.8, range: 1.2, speed: .5, t: 0 });
+
+  // Room 2 (Top-Right): "Submissions & Output Hub" (Stacked paper boxes & delivery desk)
+  box(2.4, .7, 1.2, M.deskWood, 3.4, .35, -2.8, interiorRoot);
+  box(1.0, .5, .7, new THREE.MeshStandardMaterial({ color: 0xF8FAFC }), 3.4, .85, -2.8, interiorRoot);
+  const cw2 = new THREE.Group(); cw2.position.set(3.4, 0, -1.8); interiorRoot.add(cw2);
+  box(.22, .32, .16, M.personCoat, 0, .28, 0, cw2);
+  box(.16, .16, .16, M.personSkin, 0, .52, 0, cw2);
+  box(.16, .12, .12, M.compScreen, .12, .35, .10, cw2);
+  const cw2Leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, cw2);
+  const cw2Leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, cw2);
+  cutawayWorkers.push({ type: 'walking', group: cw2, leg1: cw2Leg1, leg2: cw2Leg2, baseZ: -2.0, range: 1.0, speed: .6, t: .5 });
+
+  // Room 3 (Bottom-Left): "Access Security & Tool Invocations Gate" (Turnstiles + lock gate)
+  box(.3, .8, .3, M.interiorWall, -4.2, .4, 2.6, interiorRoot);
+  box(.3, .8, .3, M.interiorWall, -2.6, .4, 2.6, interiorRoot);
+  box(1.4, .08, .08, M.goldRing, -3.4, .55, 2.6, interiorRoot);
+  const cw3 = new THREE.Group(); cw3.position.set(-3.4, 0, 3.5); interiorRoot.add(cw3);
+  box(.22, .32, .16, M.personPants, 0, .28, 0, cw3);
+  const cw3Head = box(.16, .16, .16, M.personSkin, 0, .52, 0, cw3);
+  const cw3Arm = box(.06, .20, .06, M.personCoat, -.16, .35, 0, cw3);
+  cutawayWorkers.push({ type: 'gesturing', head: cw3Head, arm: cw3Arm, seed: 4 });
+
+  // Room 4 (Bottom-Right): "Model AI Podium & Leaderboard" (Stepped podium with winner character)
+  box(1.0, .3, .8, M.deskWood, 2.5, .15, 2.6, interiorRoot);
+  box(1.0, .5, .8, M.deskWood, 3.5, .25, 2.6, interiorRoot);
+  box(1.0, .2, .8, M.deskWood, 4.5, .1, 2.6, interiorRoot);
+  const cw4 = new THREE.Group(); cw4.position.set(3.5, .35, 2.6); interiorRoot.add(cw4);
+  box(.22, .32, .16, FAM_MAT[fam] || M.personCoat, 0, .30, 0, cw4);
+  box(.16, .16, .16, M.personSkin, 0, .54, 0, cw4);
+  const winArmL = box(.06, .22, .06, M.personCoat, -.18, .45, 0, cw4);
+  const winArmR = box(.06, .22, .06, M.personCoat, .18, .45, 0, cw4);
+  cutawayWorkers.push({ type: 'cheer', armL: winArmL, armR: winArmR });
+
+  // Create Interior Floating Callout Pills (Image 2 style)
+  function createInteriorPill(text, worldX, worldY, worldZ, isWarn = false) {
+    const el = document.createElement('div');
+    el.className = 'interior-pill' + (isWarn ? ' warn' : '');
+    el.innerHTML = `<span class="icon">${isWarn ? '▲' : '●'}</span> <span>${text}</span>`;
+    document.body.appendChild(el);
+    interiorPills.push(el);
+    return { el, pos: new THREE.Vector3(worldX, worldY, worldZ) };
+  }
+
+  const hitRatePct = ((project.cacheHitRate || 0) * 100).toFixed(0);
+  const pillData = [
+    createInteriorPill(`Prompt Cache  ${hitRatePct}% (${big(t.cacheRead || 0)} read)`, -3.4, 2.4, -2.6, project.cacheLeak),
+    createInteriorPill(`Spend  ${money(project.costUSD || 0)} (${project.sessions || 0} sessions)`, 3.4, 2.4, -2.6, false),
+    createInteriorPill(`Tool Calls  ${project.toolCalls || 0} invoked`, -3.4, 2.4, 2.6, false),
+    createInteriorPill(`Core Model  ${project.primaryModel || FAM_NAME[fam]}`, 3.4, 2.4, 2.6, false)
+  ];
+  interiorPillsPositions = pillData;
+}
+
+function applyFilters() {
+  const visibleB = B.filter(b => activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource)));
+  const max = Math.max(...visibleB.map(b => METRIC[metric].get(b.p)), 1e-9);
+
+  for (const b of B) {
+    const isVisible = activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource));
+    if (isVisible) {
+      b.target = .35 + 13 * Math.sqrt(METRIC[metric].get(b.p) / max);
+      b.mat.opacity = 1.0; b.mat.transparent = false;
+    } else {
+      b.target = .15;
+      b.mat.opacity = 0.25; b.mat.transparent = true;
+    }
+    if (reduceMotion) b.h = b.target;
+  }
+  renderLabels(); renderSide(); renderPanel();
 }
 
 function setMetric(m) {
-  metric = m; document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
-  const max = Math.max(...B.map(b => METRIC[m].get(b.p)), 1e-9);
-  for (const b of B) b.target = .35 + 13 * Math.sqrt(METRIC[m].get(b.p) / max);
-  if (reduceMotion) for (const b of B) b.h = b.target;
-  renderLabels(); renderPanel();
+  metric = m; document.querySelectorAll('[data-m]').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+  applyFilters();
 }
-document.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMetric(b.dataset.m));
+document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => setMetric(b.dataset.m));
 
-/* ---------- labels + side cards ---------- */
+document.querySelectorAll('#toolFilter button').forEach(b => {
+  b.onclick = () => {
+    activeSource = b.dataset.src;
+    document.querySelectorAll('#toolFilter button').forEach(el => el.setAttribute('aria-pressed', el.dataset.src === activeSource));
+    applyFilters();
+  };
+});
+
+let camMode = 'aerial';
+function setCamView(mode) {
+  camMode = mode;
+  document.querySelectorAll('#camPerspective button').forEach(el => el.setAttribute('aria-pressed', el.dataset.cam === mode));
+  controls.autoRotate = false;
+  if (mode === 'street') {
+    if (state.selected != null) {
+      const g = B[state.selected].g.position;
+      goal.t.set(g.x, 0.8, g.z);
+      camera.position.set(g.x + 12, 1.8, g.z + 12);
+    } else {
+      goal.t.set(0, 0.8, 0);
+      camera.position.set(16, 2.0, 16);
+    }
+    goal.z = 1.8;
+  } else {
+    if (state.selected != null) {
+      const g = B[state.selected].g.position;
+      goal.t.set(g.x, B[state.selected].target * .45, g.z);
+    } else {
+      goal.t.set(0, 2, 0);
+    }
+    goal.z = 1.0;
+    camera.position.set(40, 34, 40);
+  }
+  controls.target.copy(goal.t);
+  controls.update();
+  camera.updateProjectionMatrix();
+}
+document.querySelectorAll('#camPerspective button').forEach(b => {
+  b.onclick = () => setCamView(b.dataset.cam);
+});
+
+/* ---------- Floating Campus Labels (Image 1 style) ---------- */
 const labelsEl = $('#labels'); let tags = [];
 function renderLabels() {
   labelsEl.innerHTML = ''; tags = [];
-  const order = [...B].sort((a, b) => METRIC[metric].get(b.p) - METRIC[metric].get(a.p));
-  const shown = new Set(order.slice(0, innerWidth < 700 ? 3 : 5));
-  if (state.selected != null) shown.add(B[state.selected]); if (state.hover != null) shown.add(B[state.hover]);
+  if (viewMode === 'interior') return;
+
+  const activeB = B.filter(b => activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource)));
+  const order = [...activeB].sort((a, b) => METRIC[metric].get(b.p) - METRIC[metric].get(a.p));
+  const shown = new Set(order.slice(0, innerWidth < 700 ? 3 : 6));
+  if (state.selected != null) shown.add(B[state.selected]);
+  if (state.hover != null) shown.add(B[state.hover]);
+
   for (const b of shown) {
-    const el = document.createElement('div'); el.className = 'tag' + (B.indexOf(b) === state.selected ? ' sel' : '');
-    el.innerHTML = `<span>${esc(b.p.name)}</span><b>${METRIC[metric].fmt(METRIC[metric].get(b.p))}</b>`;
+    const el = document.createElement('div');
+    const isLeak = b.p.cacheLeak;
+    el.className = 'tag ' + (isLeak ? 'warning' : 'optimal') + (B.indexOf(b) === state.selected ? ' sel' : '');
+    const valText = METRIC[metric].fmt(METRIC[metric].get(b.p));
+    const icon = isLeak ? '▲' : '●';
+    const subLabel = isLeak ? 'cache leak' : valText;
+    el.innerHTML = `<span class="icon">${icon}</span> <span>${esc(b.p.name)}</span> <span style="font-weight:800">${subLabel}</span>`;
     el.onclick = (e) => { e.stopPropagation(); select(B.indexOf(b)); };
     labelsEl.appendChild(el); tags.push([el, b]);
   }
@@ -248,65 +780,190 @@ function renderLabels() {
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function renderSide() {
-  const t = data.totals, tk = t.tokens, all = sumTok(tk), cacheHit = all ? tk.cacheRead / (tk.input + tk.cacheRead + tk.cacheWrite) : 0;
-  const K = [[money(t.costUSD), 'API-equivalent'], [big(all), 'Tokens'], [hrs(t.activeHours), 'Active time'], [t.sessions, 'Sessions'], [big(t.toolCalls), 'Tool calls'], [(cacheHit * 100).toFixed(0) + '%', 'Cache hit']];
-  $('#kpis').innerHTML = K.map(([v, l]) => `<div class="kpi card"><b>${v}</b><span>${l}</span></div>`).join('');
-  const fams = Object.fromEntries(FAMS.map(f => [f, 0])); for (const p of data.projects) fams[FAMS.includes(p.family) ? p.family : 'other']++;
+  const t = data.totals || {};
+  const tk = t.tokens || {};
+  const all = sumTok(tk);
+  const cacheHit = t.cacheHitRate || (all ? (tk.cacheRead || 0) / ((tk.input || 0) + (tk.cacheRead || 0) + (tk.cacheWrite || 0)) : 0);
+  const leaks = data.projects.filter(p => p.cacheLeak);
+
+  const K = [
+    [money(t.costUSD || 0), 'API-equivalent'],
+    [big(all), 'Tokens'],
+    [hrs(t.activeHours || 0), 'Active time'],
+    [(cacheHit * 100).toFixed(0) + '%', 'Cache hit rate'],
+    ['+' + money(t.costSavedUSD || 0), 'Cache savings'],
+    [leaks.length ? leaks.length + ' leak' + (leaks.length > 1 ? 's' : '') : 'Optimal', 'Cache leaks', leaks.length > 0]
+  ];
+  $('#kpis').innerHTML = K.map(([v, l, leak]) => `<div class="kpi card${leak ? ' leak' : ''}"><b>${v}</b><span>${l}</span></div>`).join('');
+
+  const fams = Object.fromEntries(FAMS.map(f => [f, 0]));
+  for (const p of data.projects) fams[FAMS.includes(p.family) ? p.family : 'other']++;
   $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">Colour = main model</div>` +
     FAMS.filter(f => fams[f]).map(f => `<div><i style="background:${css('--' + f)}"></i>${FAM_NAME[f]} · ${fams[f]}</div>`).join('') +
-    `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active in last 3 days</div>`;
-  const D = data.daily, mx = Math.max(...D.map(d => d.costUSD), 1e-9), W = 400, H = 70, bw = W / D.length;
-  const peak = D.reduce((a, d) => d.costUSD > a.costUSD ? d : a, D[0]);
+    `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active in last 3 days</div>` +
+    `<div style="color:var(--goldRing)"><i style="background:var(--goldRing)"></i>Gold Ring = selected lot</div>` +
+    (leaks.length ? `<div style="color:var(--leak)"><i style="background:var(--leak)"></i>▲ Roof beacon = cache leak</div>` : '');
+
+  const D = data.daily || [];
+  const mx = Math.max(...D.map(d => d.costUSD), 1e-9), W = 400, H = 70, bw = W / (D.length || 1);
+  const peak = D.reduce((a, d) => d.costUSD > a.costUSD ? d : a, D[0] || { costUSD: 0 });
   $('#peak').textContent = peak ? 'peak ' + money(peak.costUSD) : '';
   $('#daysChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cost per day">${D.map((d, i) => { const h = d.costUSD / mx * (H - 4);
-    return `<rect x="${i * bw + 1}" y="${H - h}" width="${bw - 2}" height="${Math.max(h, d.costUSD ? 2 : 1)}" rx="2" fill="${d.costUSD ? css('--accent') : css('--line')}"><title>${d.date}: ${money(d.costUSD)} · ${big(d.tokens)} tokens · ${d.sessions} sessions</title></rect>`; }).join('')}</svg>`;
-  const tmax = Math.max(...data.tools.map(t => t[1]), 1);
-  $('#toolTotal').textContent = big(t.toolCalls);
-  $('#toolBars').innerHTML = data.tools.slice(0, 7).map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`).join('');
-  $('#source').classList.toggle('sample', data._sample); $('#sourceText').textContent = data._sample ? 'Sample data' : 'Your data · ' + new Date(data.generatedAt).toLocaleDateString();
-  $('#sub').textContent = `Last ${data.rangeDays} days · ${data.projects.length} projects · taller = more usage`;
+    return `<rect x="${i * bw + 1}" y="${H - h}" width="${Math.max(bw - 2, 1)}" height="${Math.max(h, d.costUSD ? 2 : 1)}" rx="2" fill="${d.costUSD ? css('--accent') : css('--line')}"><title>${d.date}: ${money(d.costUSD)} · ${big(d.tokens)} tokens · ${d.sessions} sessions</title></rect>`; }).join('')}</svg>`;
+
+  const tmax = Math.max(...(data.tools || []).map(t => t[1]), 1);
+  $('#toolTotal').textContent = big(t.toolCalls || 0);
+  $('#toolBars').innerHTML = (data.tools || []).slice(0, 7).map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`).join('');
+  $('#source').classList.toggle('sample', data._sample);
+  $('#sourceText').textContent = data._sample ? 'Sample Cockpit' : (data.sources && data.sources.length ? data.sources.join(' + ') : 'Active Data');
 }
 
 const state = { selected: null, hover: null };
 function renderPanel() {
   const P = $('#panel');
-  if (state.selected == null) { P.classList.remove('open'); return; }
-  const p = B[state.selected].p, t = p.tokens, all = sumTok(t) || 1, fam = FAMS.includes(p.family) ? p.family : 'other';
+  if (state.selected == null || viewMode === 'interior') { P.classList.remove('open'); return; }
+  const p = B[state.selected].p, t = p.tokens || {}, all = sumTok(t) || 1, fam = FAMS.includes(p.family) ? p.family : 'other';
   const seg = [['input', 'Input', '--in'], ['output', 'Output', '--out'], ['cacheWrite', 'Cache write', '--cw'], ['cacheRead', 'Cache read', '--cr']];
-  const dmax = Math.max(...p.daily.map(d => d[2]), 1e-9);
-  const tmax = Math.max(...p.topTools.map(t => t[1]), 1);
+  const dmax = Math.max(...(p.daily || []).map(d => d[2] || 0), 1e-9);
+  const tmax = Math.max(...(p.topTools || []).map(t => t[1]), 1);
+  const hitRatePct = ((p.cacheHitRate || 0) * 100).toFixed(1);
+
   P.innerHTML = `<div class="head"><h2>${esc(p.name)}</h2><button class="close" aria-label="Close">×</button></div>
-    <span class="fam" style="background:color-mix(in srgb, ${css('--' + fam)} 20%, transparent);color:${css('--' + fam)}">● Mostly ${FAM_NAME[fam]}</span>
-    <div class="grid2"><div><b>${money(p.costUSD)}</b><span>API-equivalent</span></div><div><b>${big(all)}</b><span>Tokens</span></div>
-      <div><b>${hrs(p.activeHours)}</b><span>Active time</span></div><div><b>${p.sessions}</b><span>Sessions</span></div></div>
-    <div class="sec"><h4>Where the tokens went</h4><div class="stack">${seg.map(([k, , v]) => `<div style="width:${t[k] / all * 100}%;background:${css(v)}"></div>`).join('')}</div>
-      <div class="keys">${seg.map(([k, l, v]) => `<span><i style="background:${css(v)}"></i>${l} ${big(t[k])}</span>`).join('')}</div></div>
-    <div class="sec"><h4>Cost per day</h4><svg viewBox="0 0 300 50" preserveAspectRatio="none" style="width:100%;height:50px">${p.daily.map((d, i) => { const h = d[2] / dmax * 46, bw = 300 / p.daily.length;
-      return `<rect x="${i * bw + .5}" y="${50 - h}" width="${bw - 1}" height="${Math.max(h, 1)}" rx="1.5" fill="${d[2] ? css('--' + fam) : css('--line')}"><title>${d[0]}: ${money(d[2])}</title></rect>`; }).join('')}</svg></div>
-    <div class="sec"><h4>Models</h4>${Object.entries(p.models).map(([m, c]) => `<div class="bar"><span>${esc(m)}</span><span>${money(c)}</span></div>`).join('')}</div>
-    <div class="sec"><h4>Top tools · ${big(p.toolCalls)} calls</h4>${p.topTools.map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${c}</span><div class="track"><div style="width:${c / tmax * 100}%;background:${css('--' + fam)}"></div></div></div>`).join('')}</div>
-    <div class="note">Last active ${p.lastActive ? new Date(p.lastActive).toLocaleString() : '—'}.<br>Cost is an API-list-price estimate (see pricing.json). Subscription plans aren't billed per token.</div>`;
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+      <span class="fam" style="background:color-mix(in srgb, ${css('--' + fam)} 20%, transparent);color:${css('--' + fam)}">● ${FAM_NAME[fam]}</span>
+      ${(p.sources || []).map(s => `<span class="fam" style="background:var(--lot);color:var(--dim);">${esc(s)}</span>`).join('')}
+    </div>
+    ${p.cacheLeak ? `<div class="leak-banner">▲ <b>Cache Leak Detected</b><br>${esc(p.cacheLeakReason || 'Frequent context invalidation is ballooning spend.')}</div>` : ''}
+    <div class="grid2">
+      <div><b>${money(p.costUSD || 0)}</b><span>API-equivalent</span></div>
+      <div><b>${big(all)}</b><span>Tokens</span></div>
+      <div><b>${hrs(p.activeHours || 0)}</b><span>Active time</span></div>
+      <div><b>${hitRatePct}%</b><span>Cache hit rate</span></div>
+    </div>
+    <button class="enter-btn" id="enterBuildingBtn">🚪 Enter Building (View Inner Rooms & Metrics)</button>
+    <div class="sec"><h4>Where the tokens went</h4><div class="stack">${seg.map(([k, , v]) => `<div style="width:${(t[k] || 0) / all * 100}%;background:${css(v)}"></div>`).join('')}</div>
+      <div class="keys">${seg.map(([k, l, v]) => `<span><i style="background:${css(v)}"></i>${l} ${big(t[k] || 0)}</span>`).join('')}</div></div>
+    <div class="sec"><h4>Cost per day</h4><svg viewBox="0 0 300 50" preserveAspectRatio="none" style="width:100%;height:50px">${(p.daily || []).map((d, i) => { const h = (d[2] || 0) / dmax * 46, bw = 300 / (p.daily.length || 1);
+      return `<rect x="${i * bw + .5}" y="${50 - h}" width="${Math.max(bw - 1, 1)}" height="${Math.max(h, 1)}" rx="1.5" fill="${d[2] ? css('--' + fam) : css('--line')}"><title>${d[0]}: ${money(d[2] || 0)}</title></rect>`; }).join('')}</svg></div>
+    <div class="sec"><h4>Models</h4>${Object.entries(p.models || {}).map(([m, c]) => `<div class="bar"><span>${esc(m)}</span><span>${money(c)}</span></div>`).join('')}</div>
+    <div class="sec"><h4>Top tools · ${big(p.toolCalls || 0)} calls</h4>${(p.topTools || []).map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${c}</span><div class="track"><div style="width:${c / tmax * 100}%;background:${css('--' + fam)}"></div></div></div>`).join('')}</div>
+    <div class="note">Last active ${p.lastActive ? new Date(p.lastActive).toLocaleString() : '—'}.<br>Click 'Enter Building' to zoom into interior room telemetry.</div>`;
+
   P.querySelector('.close').onclick = () => select(null);
+  P.querySelector('#enterBuildingBtn').onclick = () => enterBuilding(state.selected);
   P.classList.add('open');
 }
+
+/* ---------- View Mode Transitions (City vs Interior) ---------- */
+function enterBuilding(idx) {
+  if (idx == null) return;
+  interiorProjectIdx = idx;
+  const project = B[idx].p;
+  viewMode = 'interior';
+
+  cityRoot.visible = false;
+  $('#labels').style.display = 'none';
+  $('#panel').classList.remove('open');
+  $('#kpis').style.display = 'none';
+  $('#legend').style.display = 'none';
+  $('#days').style.display = 'none';
+  $('#tools').style.display = 'none';
+  $('#mainHeader').style.display = 'none';
+
+  interiorRoot.visible = true;
+  buildInteriorCutaway(project);
+
+  $('#breadcrumbBar').style.display = 'flex';
+  $('#crumbName').textContent = project.name;
+  const isWarn = project.cacheLeak;
+  $('#crumbStatus').textContent = isWarn ? '▲ Need attention' : '● Optimal';
+  $('#crumbStatus').style.color = isWarn ? 'var(--leak)' : 'var(--saved)';
+  $('#crumbStatus').style.borderColor = isWarn ? 'var(--leakBorder)' : 'var(--saved)';
+
+  goal.t.set(0, 0, 0);
+  goal.z = 2.4;
+}
+
+function exitBuilding() {
+  viewMode = 'city';
+  interiorRoot.visible = false;
+  interiorPills.forEach(el => el.remove()); interiorPills = [];
+
+  $('#breadcrumbBar').style.display = 'none';
+  cityRoot.visible = true;
+  $('#labels').style.display = 'block';
+  $('#kpis').style.display = 'grid';
+  $('#legend').style.display = 'grid';
+  $('#days').style.display = 'block';
+  $('#tools').style.display = 'block';
+  $('#mainHeader').style.display = 'flex';
+
+  select(interiorProjectIdx);
+}
+$('#backBtn').onclick = exitBuilding;
 
 /* ---------- picking + camera ---------- */
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 function hit(ev) {
+  if (viewMode !== 'city') return null;
   const r = renderer.domElement.getBoundingClientRect(); ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -(ev.clientY - r.top) / r.height * 2 + 1);
   ray.setFromCamera(ptr, camera); const h = ray.intersectObjects(B.map(b => b.g), true).find(x => x.object.userData.pid != null);
   return h ? h.object.userData.pid : null;
 }
 let down = null;
 renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; controls.autoRotate = false; });
-renderer.domElement.addEventListener('pointerup', e => { if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) select(hit(e)); down = null; });
-renderer.domElement.addEventListener('pointermove', e => { const id = hit(e); if (id !== state.hover) { state.hover = id; renderer.domElement.style.cursor = id != null ? 'pointer' : ''; renderLabels(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') select(null); });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) {
+    const clickedId = hit(e);
+    if (clickedId != null && clickedId === state.selected) {
+      enterBuilding(clickedId);
+    } else {
+      select(clickedId);
+    }
+  }
+  down = null;
+});
+renderer.domElement.addEventListener('pointermove', e => {
+  const id = hit(e);
+  if (id !== state.hover) {
+    state.hover = id;
+    renderer.domElement.style.cursor = id != null ? 'pointer' : '';
+    renderLabels();
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (viewMode === 'interior') exitBuilding();
+    else { select(null); $('#tableModal').close(); $('#shareModal').close(); }
+  }
+  if (e.altKey && e.key.toLowerCase() === 't') openTable();
+});
 
 const goal = { t: new THREE.Vector3(0, 2, 0), z: 1 };
 function select(i) {
   state.selected = i ?? null;
-  if (state.selected != null) { const g = B[i].g.position; goal.t.set(g.x, B[i].target * .45, g.z); goal.z = 1.3; } else { goal.t.set(0, 2, 0); goal.z = 1; }
+  B.forEach((b, idx) => { if (b.selRing) b.selRing.visible = idx === state.selected; });
+
+  if (state.selected != null) {
+    const g = B[i].g.position;
+    if (camMode === 'street') {
+      goal.t.set(g.x, 0.8, g.z);
+      goal.z = 2.0;
+      camera.position.set(g.x + 12, 1.8, g.z + 12);
+    } else {
+      goal.t.set(g.x, B[i].target * .45, g.z);
+      goal.z = 1.35;
+    }
+  } else {
+    if (camMode === 'street') {
+      goal.t.set(0, 0.8, 0);
+      goal.z = 1.8;
+      camera.position.set(16, 2.0, 16);
+    } else {
+      goal.t.set(0, 2, 0);
+      goal.z = 1;
+    }
+  }
   if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); }
   renderLabels(); renderPanel();
 }
@@ -314,48 +971,237 @@ function select(i) {
 /* ---------- theme ---------- */
 function isDark() { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
 function retheme() {
+  const dark = isDark();
   for (const [m, v] of themed) m.color.set(css(v));
   for (const b of B) b.mat.color.set(css('--' + (FAMS.includes(b.p.family) ? b.p.family : 'other')));
   M.win.emissive.set(css('--win')); M.win.emissiveIntensity = parseFloat(css('--winGlow'));
-  sun.intensity = isDark() ? .6 : 1.5; hemi.intensity = isDark() ? .5 : 1.1;
+
+  if (dark) {
+    M.windowGlass.color.set(0xFFD98A);
+    M.windowGlass.opacity = 0.58;
+    M.windowGlass.emissive.set(0xF59E0B);
+    M.windowGlass.emissiveIntensity = 0.32;
+    M.lampHead.emissiveIntensity = 1.8;
+    M.cloud.color.set(0x28324E);
+    M.cloud.opacity = 0.55;
+  } else {
+    M.windowGlass.color.set(0xCFE0FF);
+    M.windowGlass.opacity = 0.48;
+    M.windowGlass.emissive.set(0x000000);
+    M.windowGlass.emissiveIntensity = 0;
+    M.lampHead.emissiveIntensity = 0.4;
+    M.cloud.color.set(0xFFFFFF);
+    M.cloud.opacity = 0.85;
+  }
+
+  sun.intensity = dark ? .6 : 1.45; hemi.intensity = dark ? .5 : 1.15;
   if (data) { renderSide(); renderPanel(); }
 }
 $('#themeBtn').onclick = () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('ucity-theme', document.documentElement.dataset.theme); } catch {} retheme(); };
 try { const t = localStorage.getItem('ucity-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
 
-/* ---------- loop ---------- */
+/* ---------- Native <dialog> Accessible Table Modal ---------- */
+function openTable() {
+  const container = $('#tableContainer');
+  const rows = data.projects.map(p => `
+    <tr>
+      <td><b>${esc(p.name)}</b></td>
+      <td>${(p.sources || []).join(', ')}</td>
+      <td><span style="color:${css('--' + (p.family || 'other'))}">●</span> ${FAM_NAME[p.family] || 'Other'}</td>
+      <td>${money(p.costUSD || 0)}</td>
+      <td>${big(sumTok(p.tokens || {}))}</td>
+      <td>${hrs(p.activeHours || 0)}</td>
+      <td>${((p.cacheHitRate || 0) * 100).toFixed(0)}%</td>
+      <td>${p.cacheLeak ? '<span style="color:var(--leak);font-weight:700">▲ Cache Leak</span>' : '<span style="color:var(--saved)">Optimal</span>'}</td>
+    </tr>
+  `).join('');
+  container.innerHTML = `
+    <table class="data-table" role="table">
+      <thead><tr><th>Project</th><th>Sources</th><th>Model</th><th>Spend</th><th>Tokens</th><th>Hours</th><th>Cache Hit</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  const dialog = $('#tableModal');
+  dialog.showModal();
+}
+$('#tableBtn').onclick = openTable;
+$('#closeTableBtn').onclick = () => $('#tableModal').close();
+$('#tableModal').addEventListener('click', e => { if (e.target === $('#tableModal')) $('#tableModal').close(); });
+
+/* ---------- Native <dialog> Social Share Card Generator ---------- */
+function generateShareCard() {
+  const canvas = $('#shareCardCanvas');
+  const ctx = canvas.getContext('2d');
+  const t = data.totals || {};
+  const allTokens = sumTok(t.tokens || {});
+  const cacheHit = ((t.cacheHitRate || 0) * 100).toFixed(0) + '%';
+
+  const grad = ctx.createLinearGradient(0, 0, 1200, 630);
+  grad.addColorStop(0, '#090D1A'); grad.addColorStop(0.5, '#131A33'); grad.addColorStop(1, '#1E293B');
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, 1200, 630);
+
+  try { ctx.drawImage(renderer.domElement, 380, 70, 780, 480); } catch {}
+
+  ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 44px Inter, sans-serif'; ctx.fillText('DevCity', 60, 90);
+  ctx.fillStyle = '#5B9BFF'; ctx.font = '600 20px Inter, sans-serif'; ctx.fillText('Personal AI Developer Observability Cockpit', 60, 126);
+
+  const kpis = [
+    ['API Spend', money(t.costUSD || 0), '#E8ECF6'],
+    ['Total Tokens', big(allTokens), '#5B9BFF'],
+    ['Active Hours', hrs(t.activeHours || 0), '#3DDC97'],
+    ['Cache Hit Rate', cacheHit, '#F5C66B'],
+    ['Cache Savings', '+' + money(t.costSavedUSD || 0), '#10B981']
+  ];
+
+  let y = 175;
+  kpis.forEach(([label, val, col]) => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.beginPath(); ctx.roundRect(60, y, 290, 65, 12); ctx.fill();
+    ctx.fillStyle = '#94A0BC'; ctx.font = 'bold 12px Inter, sans-serif'; ctx.fillText(label.toUpperCase(), 80, y + 26);
+    ctx.fillStyle = col; ctx.font = 'bold 26px Inter, sans-serif'; ctx.fillText(val, 80, y + 54);
+    y += 75;
+  });
+
+  ctx.fillStyle = '#94A0BC'; ctx.font = '500 15px Inter, sans-serif';
+  ctx.fillText('100% Local & Private · github.com/sanjaydep1996/claude-code-usage-city', 60, 585);
+
+  const dialog = $('#shareModal');
+  dialog.showModal();
+}
+$('#shareBtn').onclick = generateShareCard;
+$('#closeShareBtn').onclick = () => $('#shareModal').close();
+$('#shareModal').addEventListener('click', e => { if (e.target === $('#shareModal')) $('#shareModal').close(); });
+
+$('#downloadCardBtn').onclick = () => {
+  const canvas = $('#shareCardCanvas');
+  const a = document.createElement('a'); a.download = 'devcity-snapshot.png'; a.href = canvas.toDataURL('image/png'); a.click();
+};
+
+$('#copyCardBtn').onclick = async () => {
+  const canvas = $('#shareCardCanvas');
+  try {
+    canvas.toBlob(async (blob) => {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      $('#copyCardBtn').textContent = '✓ Copied!';
+      setTimeout(() => $('#copyCardBtn').textContent = '📋 Copy to Clipboard', 2000);
+    });
+  } catch (e) { alert('Clipboard copy not supported in this browser; please use Download.'); }
+};
+
+/* ---------- Animation & Render Loop ---------- */
 function resize() {
   const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .95, half * 1.45 / a);
   Object.assign(camera, { left: -top * a, right: top * a, top, bottom: -top }); camera.updateProjectionMatrix(); renderer.setSize(w, h);
 }
 addEventListener('resize', resize);
 const clock = new THREE.Clock(), v = new THREE.Vector3();
+
 function frame() {
   const dt = Math.min(clock.getDelta(), .05), k = reduceMotion ? 1 : 1 - Math.pow(.015, dt);
   controls.target.lerp(goal.t, k); camera.zoom += (goal.z - camera.zoom) * k; camera.updateProjectionMatrix(); controls.update();
-  for (const [i, b] of B.entries()) {
-    b.h += (b.target - b.h) * (reduceMotion ? 1 : Math.min(1, dt * 3));
-    b.body.scale.y = b.h; b.roof.position.y = b.h + .12;
-    const n = Math.max(1, Math.min(12, Math.floor(b.h / 1.1)));
-    b.bands.forEach((band, k) => { band.visible = k < n; band.scale.y = 1 / b.h; band.position.y = (k + .7) / (n + .4); });
-    const hot = state.hover === i || state.selected === i; b.mat.emissive.set(hot ? b.mat.color : 0x000000); b.mat.emissiveIntensity = hot ? .25 : 0;
+  const time = Date.now() * .004;
+
+  if (viewMode === 'city') {
+    for (const [i, b] of B.entries()) {
+      b.h += (b.target - b.h) * (reduceMotion ? 1 : Math.min(1, dt * 3));
+      const activeFloors = Math.max(1, Math.min(10, Math.floor(b.h / b.FH)));
+      b.floors.forEach((fl, idx) => { fl.visible = idx < activeFloors; });
+      b.roof.position.y = activeFloors * b.FH + .06;
+
+      const hot = state.hover === i || state.selected === i;
+      b.mat.emissive.set(hot ? b.mat.color : 0x000000); b.mat.emissiveIntensity = hot ? .25 : 0;
+
+      if (b.beacon && !reduceMotion) {
+        const s = 1 + .25 * Math.sin(time); b.beacon.scale.set(s, s, s);
+      }
+    }
+
+    if (!reduceMotion) {
+      // Busy office workers inside the buildings
+      for (const w of officeWorkers) {
+        if (!w.floor.visible) continue;
+        if (w.type === 'typing') {
+          w.head.rotation.x = Math.sin(time * 5 + w.seed) * 0.08;
+          w.armL.rotation.x = -0.5 + Math.sin(time * 12 + w.seed) * 0.14;
+          w.armR.rotation.x = -0.5 + Math.cos(time * 12 + w.seed) * 0.14;
+        } else if (w.type === 'walking') {
+          w.t = (w.t + w.speed * dt * 0.25) % 1;
+          const progress = Math.sin(w.t * Math.PI * 2);
+          w.group.position.x = progress * w.range;
+          w.group.rotation.y = Math.cos(w.t * Math.PI * 2) >= 0 ? Math.PI / 2 : -Math.PI / 2;
+          const legAngle = Math.sin(w.t * 24) * 0.35;
+          w.leg1.rotation.x = legAngle;
+          w.leg2.rotation.x = -legAngle;
+        } else if (w.type === 'gesturing') {
+          w.arm.rotation.x = -0.4 + Math.sin(time * 3 + w.seed) * 0.25;
+          w.head.rotation.y = Math.sin(time * 2 + w.seed) * 0.2;
+        }
+      }
+
+      for (const pers of people) {
+        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
+        const pos = -half * .85 + pers.s * (half * 1.7);
+        if (pers.pathAxis) { pers.p.position.set(pers.lane, 0, pos); pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI; }
+        else { pers.p.position.set(pos, 0, pers.lane); pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
+        const legAngle = Math.sin(pers.s * 40) * .35;
+        pers.leg1.rotation.x = legAngle; pers.leg2.rotation.x = -legAngle;
+      }
+      for (const c of cars) {
+        c.s = (c.s + c.v * dt * c.dir + 1) % 1; const a = -half + .5 + c.s * (half * 2 - 1);
+        if (c.axis) { c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a); c.c.rotation.y = c.dir > 0 ? 0 : Math.PI; }
+        else { c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28)); c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
+      }
+      const bound = half * 1.4;
+      for (const c of clouds) {
+        c.cg.position.x += c.speed * dt * 2.2;
+        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
+        if (c.cg.position.x > bound) c.cg.position.x = -bound;
+      }
+    }
+
+    for (const [el, b] of tags) {
+      const activeFloors = Math.max(1, Math.min(10, Math.floor(b.h / b.FH)));
+      v.set(b.g.position.x, activeFloors * b.FH + .9, b.g.position.z).project(camera);
+      el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
+    }
+  } else if (viewMode === 'interior') {
+    if (!reduceMotion) {
+      for (const cw of cutawayWorkers) {
+        if (cw.type === 'typing') {
+          cw.head.rotation.x = Math.sin(time * 5 + cw.seed) * 0.08;
+          cw.armL.rotation.x = -0.5 + Math.sin(time * 12 + cw.seed) * 0.14;
+          cw.armR.rotation.x = -0.5 + Math.cos(time * 12 + cw.seed) * 0.14;
+        } else if (cw.type === 'walking') {
+          cw.t = (cw.t + cw.speed * dt * 0.3) % 1;
+          const progress = Math.sin(cw.t * Math.PI * 2);
+          cw.group.position.z = cw.baseZ + progress * cw.range;
+          cw.group.rotation.y = Math.cos(cw.t * Math.PI * 2) >= 0 ? 0 : Math.PI;
+          const legAngle = Math.sin(cw.t * 24) * 0.35;
+          cw.leg1.rotation.x = legAngle;
+          cw.leg2.rotation.x = -legAngle;
+        } else if (cw.type === 'gesturing') {
+          cw.arm.rotation.x = -0.4 + Math.sin(time * 3 + cw.seed) * 0.25;
+          cw.head.rotation.y = Math.sin(time * 2 + cw.seed) * 0.2;
+        } else if (cw.type === 'cheer') {
+          cw.armL.rotation.z = 0.8 + Math.sin(time * 6) * 0.3;
+          cw.armR.rotation.z = -0.8 - Math.sin(time * 6) * 0.3;
+        }
+      }
+    }
+    for (const pItem of interiorPillsPositions) {
+      v.copy(pItem.pos).project(camera);
+      pItem.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px';
+      pItem.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
+    }
   }
-  if (!reduceMotion) for (const c of cars) {
-    c.s = (c.s + c.v * dt * c.dir + 1) % 1; const a = -half + .5 + c.s * (half * 2 - 1);
-    if (c.axis) { c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a); c.c.rotation.y = c.dir > 0 ? -Math.PI / 2 : Math.PI / 2; }
-    else { c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28)); c.c.rotation.y = c.dir > 0 ? 0 : Math.PI; }
-  }
-  for (const [el, b] of tags) {
-    v.set(b.g.position.x, b.h + .9, b.g.position.z).project(camera);
-    el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
-  }
+
   renderer.render(scene, camera); requestAnimationFrame(frame);
 }
 
 /* ---------- boot ---------- */
 data = await loadData();
 buildCity(); resize(); retheme(); renderSide(); frame();
-window.__city = { data, select, setMetric };
+window.__city = { data, select, setMetric, enterBuilding, exitBuilding };
 </script>
 </body>
 </html>
