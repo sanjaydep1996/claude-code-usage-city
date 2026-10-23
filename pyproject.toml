@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "usage-city"
+version = "0.2.0"
+description = "DevCity: Personal AI developer tools observability cockpit and 3D city dashboard"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Sanjaydeep Gowrishankar", email = "30902986+sanjaydep1996@users.noreply.github.com" }]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+agents = [
+    "mcp>=1.0.0",
+    "anthropic>=0.30.0"
+]
+
+[project.scripts]
+usage-city = "devcity.cli:main"
+devcity = "devcity.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/sanjaydep1996/claude-code-usage-city"
+"Live Demo" = "https://sanjaydep1996.github.io/claude-code-usage-city/"
+Issues = "https://github.com/sanjaydep1996/claude-code-usage-city/issues"

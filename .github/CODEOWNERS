@@ -1,0 +1,6 @@
+# CODEOWNERS
+# This file defines the repository owner and sole administrator.
+# Any pull request submitted to this repository automatically requests review
+# from the code owner, and requires explicit approval before merging.
+
+* @sanjaydep1996

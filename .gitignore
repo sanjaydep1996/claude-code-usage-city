@@ -1,4 +1,10 @@
 data/usage.json
+data/*.db
+*.db
 .DS_Store
 __pycache__/
+*.pyc
 data/my-city.png
+.idea/
+.pytest_cache/
+
