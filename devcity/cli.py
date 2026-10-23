@@ -26,7 +26,7 @@ from .prove.health import calculate_health_score
 def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="devcity",
-        description="DevCity v0.3: The Local-First Companion for Software Engineering with AI (Monitor · Guide · Guard · Prove)",
+        description="DevCity v3.0: The Local-First Companion for Software Engineering with AI (Monitor · Guide · Guard · Prove)",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     p.add_argument("--days", type=int, default=30, help="Look back N days (default: 30)")
@@ -74,7 +74,7 @@ def run_collection(args: argparse.Namespace) -> int:
         collectors.append(AntigravityCollector(root=antigravity_root, cache=cache))
 
     active_collectors = [c for c in collectors if c.detect()]
-    print(f"DevCity v0.3.0: Scanning AI developer activity (last {args.days} days)...")
+    print(f"DevCity v3.0.0: Scanning AI developer activity (last {args.days} days)...")
     if not active_collectors:
         print(f"  Note: No active logs found at default paths.")
         print(f"  Checked: Claude Code ({claude_root}), Antigravity ({antigravity_root})")

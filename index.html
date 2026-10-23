@@ -219,7 +219,7 @@
 
   <header id="mainHeader">
     <div class="brand" id="brandLogo" title="Reset View">
-      <h1>DevCity <span class="badge">v0.3</span></h1>
+      <h1>DevCity <span class="badge">v3.0</span></h1>
       <p id="sub">Personal AI Developer Cockpit & Companion</p>
     </div>
 
@@ -267,7 +267,7 @@
   <!-- Interactive First-Run Tour Dialog -->
   <dialog class="native-dialog" id="tourModal" style="max-width: 580px; text-align: center;">
     <div class="modal-header">
-      <h2>Welcome to DevCity v0.3</h2>
+      <h2>Welcome to DevCity v3.0</h2>
       <button class="btn" id="closeTourBtn">×</button>
     </div>
     <div style="text-align:left;line-height:1.5;font-size:13px;color:var(--dim);">
@@ -1361,7 +1361,7 @@ $('#shareBtn').onclick = () => {
   const t = data.totals || {}, allTokens = sumTok(t.tokens || {}), cacheHit = ((t.cacheHitRate || 0) * 100).toFixed(0) + '%';
   ctx.fillStyle = '#090D1A'; ctx.fillRect(0, 0, 1200, 630);
   try { ctx.drawImage(renderer.domElement, 380, 70, 780, 480); } catch {}
-  ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 44px Inter, sans-serif'; ctx.fillText('DevCity v0.3', 60, 90);
+  ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 44px Inter, sans-serif'; ctx.fillText('DevCity v3.0', 60, 90);
   ctx.fillStyle = '#5B9BFF'; ctx.font = '600 20px Inter, sans-serif'; ctx.fillText('Personal AI Developer Cockpit & Companion', 60, 126);
 
   const kpis = [

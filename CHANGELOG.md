@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-10-23
+
+### Added
+- **Two Cities 3D Live Campus**:
+  - Toggle between **Observability City** (monitor past token spend, hours, and cache leaks) and **Developer Builder City** (8 production pavilions).
+  - 8 Builder Pavilions: System Spec Studio, DB Foundry, Backend API Factory, Frontend UI Atelier, Test QA Lab, Security Gatehouse, Deploy Tower, and ROI Citadel.
+  - Interactive camera glide, tested prompt templates with 1-click copy, pre-flight review checklists, and common pitfalls.
+- **The Four Pillars (Monitor, Guide, Guard, Prove)**:
+  - **GUIDE**: `devcity advisor` for dated, objective model and tool selection; `devcity playbook` for full-stack blueprints (`react-springboot-postgres.md`).
+  - **GUARD**: `devcity audit` for repo AI-readiness auditing; `devcity hook install` for local pre-commit secret scanning (API keys, `DROP TABLE` SQL) and budget warning hooks.
+  - **PROVE**: `devcity report` producing `DEVCITY_REPORT.md` with headline dollar savings and Weekly AI Health Score (A–F).
+  - **MONITOR**: Enhanced multi-tool aggregation with dynamic responsive layout and beginner onboarding.
+- **Beginner Experience & Responsive Overhaul**:
+  - Interactive 3-step first-run onboarding tour (`💡 Tour`).
+  - Plain-English hovercards on all KPI cards.
+  - Responsive layout overhaul via `ResizeObserver` eliminating control collisions on 1280x720, 1024x768, and 390x844 viewports.
+  - Silenced 404 console log when loading synthetic sample data.
+
 ## [0.2.0] - 2026-10-23
 
 ### Added

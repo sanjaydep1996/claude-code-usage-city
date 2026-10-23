@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devcity"
-version = "0.3.0"
+version = "3.0.0"
 description = "DevCity: Personal AI developer tools observability cockpit and 3D city dashboard"
 readme = "README.md"
 license = { text = "MIT" }
