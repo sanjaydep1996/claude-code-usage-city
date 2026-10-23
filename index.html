@@ -486,6 +486,17 @@ function createTree(x, z, parent = cityRoot) {
   parent.add(g); trees.push(g);
 }
 
+/* ---------- Low-poly Fluffy Clouds ---------- */
+function createCloud(x, y, z, scale = 1, speed = 0.4) {
+  const cg = new THREE.Group(); cg.position.set(x, y, z);
+  box(2.8 * scale, .7 * scale, 1.5 * scale, M.cloud, 0, 0, 0, cg);
+  box(1.8 * scale, .6 * scale, 1.2 * scale, M.cloud, .9 * scale, .2 * scale, .2 * scale, cg);
+  box(1.7 * scale, .6 * scale, 1.1 * scale, M.cloud, -.9 * scale, .1 * scale, -.1 * scale, cg);
+  box(1.4 * scale, .5 * scale, 1.0 * scale, M.cloud, .2 * scale, .4 * scale, 0, cg);
+  cityRoot.add(cg);
+  clouds.push({ cg, speed, startY: y, phase: Math.random() * 10 });
+}
+
 /* ---------- Build City 1: Observability Campus ---------- */
 function buildCity() {
   const P = data.projects.slice(0, 64), cells = spiral(P.length);
@@ -1240,6 +1251,13 @@ function render() {
     el.style.left = `${(pPos.x * .5 + .5) * w}px`;
     el.style.top = `${(-pPos.y * .5 + .5) * h}px`;
   }
+
+  const ct = performance.now() * 0.001;
+  clouds.forEach(c => {
+    c.cg.position.x += c.speed * 0.02;
+    if (c.cg.position.x > half * 1.5) c.cg.position.x = -half * 1.5;
+    c.cg.position.y = c.startY + Math.sin(ct + c.phase) * 0.2;
+  });
 
   renderer.render(scene, camera);
 }
