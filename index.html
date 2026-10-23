@@ -254,14 +254,14 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserv
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('#stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-const DEFAULT_ZOOM = 1.45;
+const DEFAULT_ZOOM = 1.0;
 let isAnimatingToGoal = false;
-const goal = { t: new THREE.Vector3(0, 1.8, 0), z: DEFAULT_ZOOM };
+const goal = { t: new THREE.Vector3(0, 2, 0), z: DEFAULT_ZOOM };
 const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
 camera.zoom = DEFAULT_ZOOM;
 const controls = new OrbitControls(camera, renderer.domElement);
-Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 6, minPolarAngle: .35, maxPolarAngle: 1.25, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
+Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .3, maxZoom: 5, minPolarAngle: .35, maxPolarAngle: 1.25, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
 controls.addEventListener('start', () => { isAnimatingToGoal = false; controls.autoRotate = false; });
 controls.addEventListener('change', () => { if (!isAnimatingToGoal) { goal.t.copy(controls.target); goal.z = camera.zoom; } });
 const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.15); scene.add(hemi);
@@ -909,9 +909,9 @@ function select(i) {
   if (state.selected != null) {
     const g = B[i].g.position;
     goal.t.set(g.x, B[i].target * .45, g.z);
-    goal.z = 1.9;
+    goal.z = 1.35;
   } else {
-    goal.t.set(0, 1.8, 0);
+    goal.t.set(0, 2, 0);
     goal.z = DEFAULT_ZOOM;
   }
   if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); isAnimatingToGoal = false; }
@@ -1040,7 +1040,7 @@ $('#copyCardBtn').onclick = async () => {
 
 /* ---------- Animation & Render Loop ---------- */
 function resize() {
-  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .65, half * .95 / a);
+  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .95, half * 1.45 / a);
   Object.assign(camera, { left: -top * a, right: top * a, top, bottom: -top }); camera.updateProjectionMatrix(); renderer.setSize(w, h);
 }
 addEventListener('resize', resize);
