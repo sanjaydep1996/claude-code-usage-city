@@ -4,6 +4,8 @@ See where your Claude Code time and tokens actually go: as a 3D city. Every proj
 Taller means more usage (switch between **cost**, **tokens** and **active hours**), colour shows the main
 model, and lit windows mean you worked on it in the last 3 days. Click a building for the breakdown.
 
+**[▶ Live demo](https://sanjaydep1996.github.io/claude-code-usage-city/)** (sample data)
+
 ![Usage city, dark theme](docs/screenshot-dark.png)
 ![A project selected](docs/screenshot-light.png)
 
