@@ -259,10 +259,16 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserv
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 $('#stage').appendChild(renderer.domElement);
 const scene = new THREE.Scene();
+const DEFAULT_ZOOM = 1.45;
+let isAnimatingToGoal = false;
+const goal = { t: new THREE.Vector3(0, 1.8, 0), z: DEFAULT_ZOOM };
 const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
+camera.zoom = DEFAULT_ZOOM;
 const controls = new OrbitControls(camera, renderer.domElement);
-Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 5, minPolarAngle: .05, maxPolarAngle: 1.54, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
+Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .4, maxZoom: 6, minPolarAngle: .05, maxPolarAngle: 1.54, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
+controls.addEventListener('start', () => { isAnimatingToGoal = false; controls.autoRotate = false; });
+controls.addEventListener('change', () => { if (!isAnimatingToGoal) { goal.t.copy(controls.target); goal.z = camera.zoom; } });
 const hemi = new THREE.HemisphereLight(0xffffff, 0x8899bb, 1.15); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.45); sun.position.set(22, 42, 14); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 scene.add(sun);
@@ -725,6 +731,7 @@ function setCamView(mode) {
   camMode = mode;
   document.querySelectorAll('#camPerspective button').forEach(el => el.setAttribute('aria-pressed', el.dataset.cam === mode));
   controls.autoRotate = false;
+  isAnimatingToGoal = true;
   if (mode === 'street') {
     if (state.selected != null) {
       const g = B[state.selected].g.position;
@@ -734,15 +741,16 @@ function setCamView(mode) {
       goal.t.set(0, 0.8, 0);
       camera.position.set(16, 2.0, 16);
     }
-    goal.z = 1.8;
+    goal.z = 2.4;
   } else {
     if (state.selected != null) {
       const g = B[state.selected].g.position;
       goal.t.set(g.x, B[state.selected].target * .45, g.z);
+      goal.z = 1.9;
     } else {
-      goal.t.set(0, 2, 0);
+      goal.t.set(0, 1.8, 0);
+      goal.z = DEFAULT_ZOOM;
     }
-    goal.z = 1.0;
     camera.position.set(40, 34, 40);
   }
   controls.target.copy(goal.t);
@@ -755,6 +763,9 @@ document.querySelectorAll('#camPerspective button').forEach(b => {
 
 /* ---------- Floating Campus Labels (Image 1 style) ---------- */
 const labelsEl = $('#labels'); let tags = [];
+labelsEl.addEventListener('wheel', e => {
+  renderer.domElement.dispatchEvent(new WheelEvent('wheel', e));
+}, { passive: true });
 function renderLabels() {
   labelsEl.innerHTML = ''; tags = [];
   if (viewMode === 'interior') return;
@@ -881,7 +892,8 @@ function enterBuilding(idx) {
   $('#crumbStatus').style.borderColor = isWarn ? 'var(--leakBorder)' : 'var(--saved)';
 
   goal.t.set(0, 0, 0);
-  goal.z = 2.4;
+  goal.z = 2.6;
+  isAnimatingToGoal = true;
 }
 
 function exitBuilding() {
@@ -898,6 +910,7 @@ function exitBuilding() {
   $('#tools').style.display = 'block';
   $('#mainHeader').style.display = 'flex';
 
+  isAnimatingToGoal = true;
   select(interiorProjectIdx);
 }
 $('#backBtn').onclick = exitBuilding;
@@ -939,32 +952,32 @@ document.addEventListener('keydown', e => {
   if (e.altKey && e.key.toLowerCase() === 't') openTable();
 });
 
-const goal = { t: new THREE.Vector3(0, 2, 0), z: 1 };
 function select(i) {
   state.selected = i ?? null;
   B.forEach((b, idx) => { if (b.selRing) b.selRing.visible = idx === state.selected; });
 
+  isAnimatingToGoal = true;
   if (state.selected != null) {
     const g = B[i].g.position;
     if (camMode === 'street') {
       goal.t.set(g.x, 0.8, g.z);
-      goal.z = 2.0;
+      goal.z = 2.4;
       camera.position.set(g.x + 12, 1.8, g.z + 12);
     } else {
       goal.t.set(g.x, B[i].target * .45, g.z);
-      goal.z = 1.35;
+      goal.z = 1.9;
     }
   } else {
     if (camMode === 'street') {
       goal.t.set(0, 0.8, 0);
-      goal.z = 1.8;
+      goal.z = 2.2;
       camera.position.set(16, 2.0, 16);
     } else {
-      goal.t.set(0, 2, 0);
-      goal.z = 1;
+      goal.t.set(0, 1.8, 0);
+      goal.z = DEFAULT_ZOOM;
     }
   }
-  if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); }
+  if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); isAnimatingToGoal = false; }
   renderLabels(); renderPanel();
 }
 
@@ -1090,7 +1103,7 @@ $('#copyCardBtn').onclick = async () => {
 
 /* ---------- Animation & Render Loop ---------- */
 function resize() {
-  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .95, half * 1.45 / a);
+  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .65, half * .95 / a);
   Object.assign(camera, { left: -top * a, right: top * a, top, bottom: -top }); camera.updateProjectionMatrix(); renderer.setSize(w, h);
 }
 addEventListener('resize', resize);
@@ -1098,7 +1111,18 @@ const clock = new THREE.Clock(), v = new THREE.Vector3();
 
 function frame() {
   const dt = Math.min(clock.getDelta(), .05), k = reduceMotion ? 1 : 1 - Math.pow(.015, dt);
-  controls.target.lerp(goal.t, k); camera.zoom += (goal.z - camera.zoom) * k; camera.updateProjectionMatrix(); controls.update();
+  if (isAnimatingToGoal) {
+    controls.target.lerp(goal.t, k);
+    camera.zoom += (goal.z - camera.zoom) * k;
+    camera.updateProjectionMatrix();
+    if (controls.target.distanceTo(goal.t) < 0.02 && Math.abs(goal.z - camera.zoom) < 0.01) {
+      controls.target.copy(goal.t);
+      camera.zoom = goal.z;
+      camera.updateProjectionMatrix();
+      isAnimatingToGoal = false;
+    }
+  }
+  controls.update();
   const time = Date.now() * .004;
 
   if (viewMode === 'city') {
@@ -1200,7 +1224,9 @@ function frame() {
 
 /* ---------- boot ---------- */
 data = await loadData();
-buildCity(); resize(); retheme(); renderSide(); frame();
+buildCity(); resize(); retheme(); renderSide();
+camera.zoom = DEFAULT_ZOOM; camera.updateProjectionMatrix();
+frame();
 window.__city = { data, select, setMetric, enterBuilding, exitBuilding };
 </script>
 </body>
