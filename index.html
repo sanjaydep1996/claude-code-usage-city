@@ -427,6 +427,8 @@ const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
 camera.zoom = DEFAULT_ZOOM;
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 2, 0);
+camera.lookAt(controls.target);
 Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .3, maxZoom: 5, minPolarAngle: .35, maxPolarAngle: 1.25, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
 controls.addEventListener('start', () => { isAnimatingToGoal = false; controls.autoRotate = false; });
 controls.addEventListener('change', () => { if (!isAnimatingToGoal) { goal.t.copy(controls.target); goal.z = camera.zoom; } });
@@ -1193,7 +1195,21 @@ labelsEl.addEventListener('wheel', e => {
 
 function renderLabels() {
   labelsEl.innerHTML = ''; tags = [];
-  if (viewMode === 'interior') return;
+  if (viewMode === 'interior') {
+    INTERIOR_ROOMS.forEach((r, idx) => {
+      const el = document.createElement('div');
+      el.className = 'tag' + (selectedInteriorRoom === idx ? ' sel' : '');
+      el.style.background = 'rgba(255, 255, 255, 0.95)';
+      el.style.color = '#0F172A';
+      el.style.borderColor = selectedInteriorRoom === idx ? '#3B82F6' : '#CBD5E1';
+      el.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)';
+      el.innerHTML = `<span>${esc(r.icon)}</span> <span style="font-weight:700;">${esc(r.name)}</span>`;
+      el.onclick = (e) => { e.stopPropagation(); focusInteriorRoom(idx); };
+      labelsEl.appendChild(el);
+      tags.push([el, r]);
+    });
+    return;
+  }
 
   if (campusMode === 'builder') {
     builderPavilions.forEach(bp => {
@@ -1345,6 +1361,7 @@ function switchCampus(mode) {
   goal.z = DEFAULT_ZOOM;
   isAnimatingToGoal = true;
 
+  resize();
   renderSide();
   renderLabels();
 }
@@ -1448,8 +1465,11 @@ function select(idx) {
     const b = B[idx];
     goal.t.set(b.g.position.x, 2, b.g.position.z);
     goal.z = 1.6;
-    isAnimatingToGoal = true;
+  } else {
+    goal.t.set(0, 2, 0);
+    goal.z = DEFAULT_ZOOM;
   }
+  isAnimatingToGoal = true;
   renderPanel();
   renderLabels();
 }
@@ -1464,37 +1484,310 @@ function selectBuilder(id) {
     if (bp) {
       goal.t.set(bp.x, 2, bp.z);
       goal.z = 1.6;
-      isAnimatingToGoal = true;
     }
+  } else {
+    goal.t.set(0, 2, 0);
+    goal.z = DEFAULT_ZOOM;
   }
+  isAnimatingToGoal = true;
   renderPanel();
   renderLabels();
 }
 window.selectBuilderById = selectBuilder;
 
-/* ---------- Interior Room Cutaways ---------- */
+/* ---------- Interior Room Cutaways (Architectural Digital Twin) ---------- */
+const INTM = {
+  lawn: new THREE.MeshStandardMaterial({ color: 0x3E6B3E, roughness: 0.85 }),
+  deck: new THREE.MeshStandardMaterial({ color: 0x9B724D, roughness: 0.75 }),
+  parquet: new THREE.MeshStandardMaterial({ color: 0xC89D7C, roughness: 0.4 }),
+  tile: new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.35 }),
+  rug: new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.95 }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.7 }),
+  wallDark: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.6 }),
+  sofa: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 }),
+  sofaCushion: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 }),
+  leather: new THREE.MeshStandardMaterial({ color: 0xC27838, roughness: 0.55 }),
+  wood: new THREE.MeshStandardMaterial({ color: 0xB47A46, roughness: 0.5 }),
+  chair: new THREE.MeshStandardMaterial({ color: 0x1E222D, roughness: 0.6 }),
+  cabinet: new THREE.MeshStandardMaterial({ color: 0xDCE3EB, roughness: 0.4 }),
+  counter: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.2, metalness: 0.2 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.6 }),
+  tv: new THREE.MeshStandardMaterial({ color: 0x0B0F19, roughness: 0.2 }),
+  tvGlow: new THREE.MeshBasicMaterial({ color: 0x60A5FA }),
+  pendantGlow: new THREE.MeshStandardMaterial({ color: 0xFFFBEB, emissive: 0xFDE047, emissiveIntensity: 1.5, roughness: 0.2 }),
+  stripGlow: new THREE.MeshStandardMaterial({ color: 0xFFEDD5, emissive: 0xFB923C, emissiveIntensity: 1.2, roughness: 0.2 }),
+  umbrella: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.5 }),
+  leaf: new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.65 }),
+  cyanRing: new THREE.MeshBasicMaterial({ color: 0x38BDF8 }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x93C5FD, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false }),
+  stepGlow: new THREE.MeshStandardMaterial({ color: 0xFEF08A, emissive: 0xEAB308, emissiveIntensity: 0.8, roughness: 0.3 })
+};
+
+const INTERIOR_ROOMS = [
+  { id: 'lounge', name: 'AI Lounge', icon: '🛋️', x: -2.8, y: 1.8, z: -0.6, desc: 'Sectional couch, 4K monitor, prompt cache streaming', stat: '98% Cache Hit' },
+  { id: 'warroom', name: 'War Room', icon: '📊', x: -2.4, y: 1.8, z: 2.4, desc: 'Solid oak conference table, 6 dev seats, model advisor routing', stat: 'Claude 3.7 Sonnet' },
+  { id: 'kitchen', name: 'Coffee Hub', icon: '☕', x: 1.6, y: 1.8, z: -2.5, desc: 'Kitchen island, espresso bar, under-cabinet warm LEDs', stat: '4.2h Active Pacing' },
+  { id: 'office', name: 'Dev Office', icon: '💻', x: 4.8, y: 1.8, z: 2.2, desc: 'Executive workstation, dual monitors, git secret pre-commit guard', stat: '24 Tool Calls/m' },
+  { id: 'server', name: 'Server Bay', icon: '⚡', x: 4.8, y: 1.8, z: -2.0, desc: 'Hardware rack, server blades, 4 MCP tool schemas', stat: '480 Tokens Tool Schema' },
+  { id: 'terrace', name: 'Garden Terrace', icon: '🌿', x: -8.0, y: 1.4, z: 1.2, desc: 'Outdoor slatted wood deck, patio umbrella, zero-waste streak', stat: 'Grade A (90/100)' }
+];
+let selectedInteriorRoom = null;
 let interiorPills = [];
+
+function focusInteriorRoom(idx) {
+  selectedInteriorRoom = idx;
+  if (idx == null) {
+    goal.t.set(0.5, 0.8, 0.2);
+    goal.z = 2.0;
+  } else {
+    const r = INTERIOR_ROOMS[idx];
+    goal.t.set(r.x, 0.8, r.z);
+    goal.z = 2.9;
+  }
+  isAnimatingToGoal = true;
+  renderLabels();
+  if (interiorProjectIdx != null && B[interiorProjectIdx]) {
+    renderInteriorPanel(B[interiorProjectIdx].p);
+  }
+}
+window.focusInteriorRoomById = focusInteriorRoom;
+
+function renderInteriorPanel(p) {
+  const P = $('#panel');
+  const t = p.tokens || {}, all = sumTok(t) || 1;
+  const hitRatePct = ((p.cacheHitRate || 0) * 100).toFixed(1);
+
+  P.innerHTML = `
+    <div class="head">
+      <div>
+        <h2 style="font-size:18px;">${esc(p.name)}</h2>
+        <span style="font-size:11px;color:var(--dim);text-transform:uppercase;font-weight:700;">🏠 Architectural Digital Twin</span>
+      </div>
+      <button class="close" id="closeInteriorPanel" aria-label="Close">×</button>
+    </div>
+
+    <div class="grid2" style="margin:12px 0;">
+      <div><b>${money(p.costUSD || 0)}</b><span>API Spend</span></div>
+      <div><b>${hitRatePct}%</b><span>Cache Hit Rate</span></div>
+      <div><b>${big(all)}</b><span>Total Tokens</span></div>
+      <div><b>${hrs(p.activeHours || 0)}</b><span>Active Time</span></div>
+    </div>
+
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">
+      <button class="pill" style="cursor:pointer;background:${selectedInteriorRoom == null ? 'var(--accent)' : 'var(--card)'};color:${selectedInteriorRoom == null ? '#fff' : 'var(--ink)'};" onclick="focusInteriorRoom(null)">All Rooms</button>
+      ${INTERIOR_ROOMS.map((r, i) => `
+        <button class="pill" style="cursor:pointer;background:${selectedInteriorRoom === i ? 'var(--accent)' : 'var(--card)'};color:${selectedInteriorRoom === i ? '#fff' : 'var(--ink)'};" onclick="focusInteriorRoom(${i})">
+          ${esc(r.icon)} ${esc(r.name)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div style="display:grid;gap:8px;">
+      ${INTERIOR_ROOMS.map((r, i) => `
+        <div style="background:var(--card);border:1.5px solid ${selectedInteriorRoom === i ? 'var(--accent)' : 'var(--line)'};border-radius:10px;padding:10px;cursor:pointer;transition:border-color .15s ease;" onclick="focusInteriorRoom(${i})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b style="font-size:13px;display:flex;align-items:center;gap:6px;">${esc(r.icon)} ${esc(r.name)}</b>
+            <span class="pill" style="font-size:10px;background:var(--lot);">${esc(r.stat)}</span>
+          </div>
+          <p style="margin:4px 0 0;font-size:11px;color:var(--dim);line-height:1.4;">${esc(r.desc)}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <button class="enter-btn" id="exitToCampusBtn" style="margin-top:14px;background:var(--card);color:var(--accent);border:1.5px solid var(--accent);">← Back to AppTrack Town</button>
+  `;
+
+  P.querySelector('#closeInteriorPanel').onclick = () => P.classList.remove('open');
+  P.querySelector('#exitToCampusBtn').onclick = exitBuilding;
+  P.classList.add('open');
+}
+
 function buildInteriorCutaway(project) {
   while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
   interiorPills.forEach(el => el.remove()); interiorPills = [];
 
-  const w = 7.0, d = 7.0, fh = 2.6;
-  box(w + 2, 0.4, d + 2, M.ground, 0, -0.2, 0, interiorRoot);
+  // 1. Lush Green Lawn Base
+  box(24, 0.4, 20, INTM.lawn, 0, -0.2, 0, interiorRoot);
 
-  for (let f = 0; f < 2; f++) {
-    const fg = new THREE.Group(); fg.position.set(0, f * fh, 0); interiorRoot.add(fg);
-    box(w, 0.12, d, M.interiorFloor, 0, 0.06, 0, fg);
-    box(w, fh, 0.14, M.interiorWall, 0, fh / 2, -d / 2 + 0.07, fg);
-    box(0.14, fh, d, M.interiorWall, -w / 2 + 0.07, fh / 2, 0, fg);
+  // 4 Decorative Low-Poly Shrubs on Lawn
+  const shrubGeo = new THREE.DodecahedronGeometry(0.55);
+  const shrubPositions = [
+    [-10, 0.45, -7], [10, 0.45, -7], [10, 0.45, 7], [-4.5, 0.45, -7]
+  ];
+  shrubPositions.forEach(([sx, sy, sz]) => {
+    const sh = new THREE.Mesh(shrubGeo, INTM.leaf);
+    sh.position.set(sx, sy, sz); sh.castShadow = true; interiorRoot.add(sh);
+  });
 
-    box(1.4, 0.7, 0.8, M.deskWood, -1.6, 0.45, -1.6, fg);
-    box(0.6, 0.35, 0.06, M.compScreen, -1.6, 0.95, -1.6, fg);
-    box(0.5, 0.25, 0.02, M.screenCode, -1.6, 0.95, -1.56, fg);
-
-    box(1.4, 0.7, 0.8, M.deskWood, 1.6, 0.45, -1.6, fg);
-    box(0.6, 0.35, 0.06, M.compScreen, 1.6, 0.95, -1.6, fg);
-    box(0.5, 0.25, 0.02, M.screenCode, 1.6, 0.95, -1.56, fg);
+  // 2. Outdoor Terrace Deck (slatted wood patio on left)
+  box(6.5, 0.08, 6.8, INTM.deck, -8.0, 0.04, 1.2, interiorRoot);
+  for (let dz = -1.8; dz <= 4.2; dz += 0.6) {
+    box(6.3, 0.02, 0.04, INTM.steel, -8.0, 0.09, dz, interiorRoot);
   }
+  // Outdoor patio table & 4 chairs
+  box(1.6, 0.06, 1.1, INTM.wood, -8.0, 0.72, 1.2, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -8.6, 0.35, 0.8, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -7.4, 0.35, 0.8, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -8.6, 0.35, 1.6, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -7.4, 0.35, 1.6, interiorRoot);
+  const chairPos = [
+    [-8.0, 0.25, 0.4], [-8.0, 0.25, 2.0], [-9.0, 0.25, 1.2], [-7.0, 0.25, 1.2]
+  ];
+  chairPos.forEach(([cx, cy, cz]) => {
+    box(0.45, 0.05, 0.45, INTM.chair, cx, 0.42, cz, interiorRoot);
+    box(0.45, 0.45, 0.06, INTM.chair, cx, 0.65, cz + (cz < 1.2 ? -0.2 : 0.2), interiorRoot);
+    box(0.06, 0.4, 0.06, INTM.steel, cx - 0.18, 0.2, cz - 0.18, interiorRoot);
+    box(0.06, 0.4, 0.06, INTM.steel, cx + 0.18, 0.2, cz + 0.18, interiorRoot);
+  });
+
+  // Outdoor White Patio Parasol Umbrella
+  box(0.08, 2.2, 0.08, INTM.steel, -1.5, 1.1, 7.0, interiorRoot);
+  const umbrellaCone = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 1.6, 0.6, 8), INTM.umbrella);
+  umbrellaCone.position.set(-1.5, 2.0, 7.0); umbrellaCone.castShadow = true; interiorRoot.add(umbrellaCone);
+
+  // Garden Stepping Stone Walkway
+  box(1.2, 0.04, 5.0, INTM.tile, 0.5, 0.02, 5.5, interiorRoot);
+  [[-0.2, 0.2, 5.0], [1.2, 0.2, 6.5]].forEach(([bx, by, bz]) => {
+    box(0.1, 0.4, 0.1, INTM.steel, bx, by, bz, interiorRoot);
+    box(0.12, 0.1, 0.12, INTM.pendantGlow, bx, by + 0.25, bz, interiorRoot);
+  });
+
+  // 3. Interior Room Floors
+  // Living Room & Dining (Warm Parquet Wood)
+  box(5.5, 0.06, 7.3, INTM.parquet, -2.75, 0.03, 0.15, interiorRoot);
+  // Navy Area Rug in Lounge
+  box(3.2, 0.02, 2.6, INTM.rug, -2.8, 0.07, -0.6, interiorRoot);
+
+  // Kitchen & Hallway (Ceramic Tile)
+  box(3.2, 0.06, 4.0, INTM.tile, 1.6, 0.03, -1.5, interiorRoot);
+  box(3.2, 0.06, 3.3, INTM.tile, 1.6, 0.03, 2.15, interiorRoot);
+
+  // Engineering Office (Parquet Wood)
+  box(3.3, 0.06, 3.3, INTM.parquet, 4.85, 0.03, 2.15, interiorRoot);
+
+  // Hardware / Server Bay (Dark Slate)
+  box(3.3, 0.06, 4.0, INTM.wallDark, 4.85, 0.03, -1.5, interiorRoot);
+
+  // 4. Perimeter & Dividing Cutaway Walls (Height 1.8, Thickness 0.22)
+  // Back Wall
+  box(12.0, 1.8, 0.22, INTM.wall, 0.5, 0.9, -3.65, interiorRoot);
+  box(1.8, 0.9, 0.04, INTM.glass, -2.5, 1.1, -3.65, interiorRoot);
+  box(1.8, 0.9, 0.04, INTM.glass, 4.85, 1.1, -3.65, interiorRoot);
+
+  // Left Wall (Living Room to Terrace)
+  box(0.22, 1.8, 7.3, INTM.wall, -5.5, 0.9, 0.15, interiorRoot);
+  box(0.04, 1.4, 2.2, INTM.glass, -5.5, 0.75, 1.5, interiorRoot);
+
+  // Right Wall
+  box(0.22, 1.8, 7.3, INTM.wall, 6.5, 0.9, 0.15, interiorRoot);
+
+  // Front Walls with Entrance opening at x ≈ 0.5
+  box(5.5, 1.8, 0.22, INTM.wall, -2.75, 0.9, 3.8, interiorRoot);
+  box(3.3, 1.8, 0.22, INTM.wall, 4.85, 0.9, 3.8, interiorRoot);
+
+  // Interior Dividing Walls
+  box(0.22, 1.8, 3.2, INTM.wall, 0.0, 0.9, 2.2, interiorRoot);
+  box(0.22, 1.8, 4.0, INTM.wall, 3.2, 0.9, -1.5, interiorRoot);
+  box(0.22, 1.8, 3.3, INTM.wall, 3.2, 0.9, 2.15, interiorRoot);
+  box(3.3, 1.8, 0.22, INTM.wall, 4.85, 0.9, 0.5, interiorRoot);
+
+  // 5. Room 1: AI Developer Lounge Props
+  box(2.4, 0.45, 0.85, INTM.sofa, -2.6, 0.25, -0.2, interiorRoot);
+  box(0.85, 0.45, 1.4, INTM.sofa, -4.1, 0.25, 0.4, interiorRoot);
+  box(2.4, 0.45, 0.22, INTM.sofaCushion, -2.6, 0.65, -0.55, interiorRoot);
+  box(0.22, 0.35, 1.4, INTM.sofaCushion, -4.45, 0.55, 0.4, interiorRoot);
+  box(1.2, 0.3, 0.6, INTM.wood, -2.6, 0.18, 0.5, interiorRoot);
+  box(0.3, 0.02, 0.22, INTM.chair, -2.6, 0.34, 0.5, interiorRoot);
+  box(0.75, 0.4, 0.75, INTM.leather, -1.1, 0.25, 0.5, interiorRoot);
+  box(0.18, 0.4, 0.75, INTM.leather, -0.75, 0.6, 0.5, interiorRoot);
+  box(0.08, 0.9, 1.8, INTM.tv, -5.35, 1.1, -0.6, interiorRoot);
+  box(0.02, 0.82, 1.72, INTM.tvGlow, -5.3, 1.1, -0.6, interiorRoot);
+  box(0.4, 0.4, 2.2, INTM.wood, -5.1, 0.22, -0.6, interiorRoot);
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.25, 0.6, 12), INTM.cabinet);
+  pot.position.set(-4.8, 0.3, 3.0); interiorRoot.add(pot);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.04, 8, 24), INTM.cyanRing);
+  ring.position.set(-4.8, 0.06, 3.0); ring.rotateX(Math.PI / 2); interiorRoot.add(ring);
+  box(0.12, 1.1, 0.12, INTM.wood, -4.8, 0.9, 3.0, interiorRoot);
+  const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48), INTM.leaf);
+  leaves.position.set(-4.8, 1.5, 3.0); interiorRoot.add(leaves);
+  box(0.06, 1.6, 0.06, INTM.steel, -1.2, 0.8, -1.2, interiorRoot);
+  box(0.25, 0.2, 0.25, INTM.pendantGlow, -1.2, 1.5, -1.2, interiorRoot);
+
+  // 6. Room 2: War Room / Dining Props
+  box(2.6, 0.08, 1.2, INTM.wood, -2.4, 0.72, 2.4, interiorRoot);
+  [[-3.6, 1.8], [-1.2, 1.8], [-3.6, 3.0], [-1.2, 3.0]].forEach(([lx, lz]) => {
+    box(0.08, 0.68, 0.08, INTM.steel, lx, 0.35, lz, interiorRoot);
+  });
+  [-3.1, -2.4, -1.7].forEach(cx => {
+    box(0.42, 0.05, 0.42, INTM.chair, cx, 0.42, 1.65, interiorRoot);
+    box(0.42, 0.45, 0.06, INTM.chair, cx, 0.65, 1.45, interiorRoot);
+    box(0.42, 0.05, 0.42, INTM.chair, cx, 0.42, 3.15, interiorRoot);
+    box(0.42, 0.45, 0.06, INTM.chair, cx, 0.65, 3.35, interiorRoot);
+  });
+  [-3.0, -2.4, -1.8].forEach(px => {
+    box(0.02, 0.5, 0.02, INTM.steel, px, 1.75, 2.4, interiorRoot);
+    const pend = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), INTM.pendantGlow);
+    pend.position.set(px, 1.5, 2.4); interiorRoot.add(pend);
+  });
+
+  // 7. Room 3: Kitchen & Coffee Bar Props
+  box(3.0, 0.82, 0.65, INTM.cabinet, 1.6, 0.41, -3.2, interiorRoot);
+  box(3.05, 0.06, 0.7, INTM.counter, 1.6, 0.84, -3.2, interiorRoot);
+  box(3.0, 0.6, 0.4, INTM.cabinet, 1.6, 1.5, -3.3, interiorRoot);
+  box(2.9, 0.04, 0.08, INTM.stripGlow, 1.6, 1.18, -3.1, interiorRoot);
+  box(1.8, 0.82, 0.85, INTM.cabinet, 1.6, 0.41, -1.8, interiorRoot);
+  box(1.9, 0.06, 0.95, INTM.counter, 1.6, 0.84, -1.8, interiorRoot);
+  [1.2, 2.0].forEach(sx => {
+    box(0.06, 0.65, 0.06, INTM.steel, sx, 0.33, -1.1, interiorRoot);
+    const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12), INTM.wood);
+    seat.position.set(sx, 0.65, -1.1); interiorRoot.add(seat);
+  });
+  box(0.75, 1.7, 0.7, INTM.cabinet, -0.3, 0.85, -3.2, interiorRoot);
+
+  // 8. Room 4: Architectural Floating Open-Tread Staircase
+  for (let step = 0; step < 10; step++) {
+    const sy = 0.15 + step * 0.15;
+    const sz = 1.6 - step * 0.24;
+    box(1.1, 0.05, 0.28, INTM.wood, 1.6, sy, sz, interiorRoot);
+    box(1.05, 0.02, 0.04, INTM.stepGlow, 1.6, sy - 0.02, sz + 0.12, interiorRoot);
+  }
+  box(0.08, 1.8, 2.8, INTM.steel, 1.05, 0.9, 0.5, interiorRoot).rotateX(0.55);
+  box(0.08, 1.8, 2.8, INTM.steel, 2.15, 0.9, 0.5, interiorRoot).rotateX(0.55);
+
+  // 9. Room 5: Engineering Workstation Props
+  box(1.8, 0.72, 0.8, INTM.wood, 4.8, 0.38, 2.6, interiorRoot);
+  box(0.6, 0.72, 1.0, INTM.wood, 5.7, 0.38, 2.1, interiorRoot);
+  box(0.65, 0.38, 0.04, INTM.tv, 4.5, 0.95, 2.5, interiorRoot);
+  box(0.62, 0.34, 0.01, INTM.tvGlow, 4.5, 0.95, 2.48, interiorRoot);
+  const mon2 = box(0.65, 0.38, 0.04, INTM.tv, 5.2, 0.95, 2.5, interiorRoot);
+  mon2.rotateY(-0.25);
+  const scr2 = box(0.62, 0.34, 0.01, M.screenCode, 5.2, 0.95, 2.48, interiorRoot);
+  scr2.rotateY(-0.25);
+  box(0.5, 0.08, 0.5, INTM.chair, 4.8, 0.45, 1.8, interiorRoot);
+  box(0.5, 0.55, 0.08, INTM.chair, 4.8, 0.75, 1.55, interiorRoot);
+  box(0.08, 0.42, 0.08, INTM.steel, 4.8, 0.22, 1.8, interiorRoot);
+  box(0.35, 1.6, 1.4, INTM.cabinet, 6.2, 0.8, 1.2, interiorRoot);
+
+  // 10. Room 6: Hardware & Server Bay Props
+  box(0.8, 1.6, 0.8, INTM.wallDark, 4.8, 0.8, -3.0, interiorRoot);
+  for (let sby = 0.3; sby <= 1.4; sby += 0.2) {
+    box(0.72, 0.08, 0.04, INTM.tvGlow, 4.8, sby, -2.58, interiorRoot);
+  }
+  box(1.6, 0.8, 0.7, INTM.counter, 4.8, 0.4, -1.2, interiorRoot);
+  box(0.3, 0.2, 0.2, INTM.steel, 4.4, 0.9, -1.2, interiorRoot);
+
+  // 11. Atmospheric Point Lights
+  const light1 = new THREE.PointLight(0xF59E0B, 1.6, 8.0);
+  light1.position.set(-2.4, 1.6, 2.4); interiorRoot.add(light1);
+
+  const light2 = new THREE.PointLight(0xFB923C, 1.4, 7.0);
+  light2.position.set(1.6, 1.3, -3.0); interiorRoot.add(light2);
+
+  const light3 = new THREE.PointLight(0x60A5FA, 1.0, 7.0);
+  light3.position.set(-5.0, 1.1, -0.6); interiorRoot.add(light3);
+
+  const light4 = new THREE.PointLight(0xFDE047, 0.8, 5.5);
+  light4.position.set(0.5, 0.6, 6.0); interiorRoot.add(light4);
 }
 
 function enterBuilding(idx) {
@@ -1505,8 +1798,6 @@ function enterBuilding(idx) {
 
   cityRoot.visible = false;
   builderRoot.visible = false;
-  $('#labels').style.display = 'none';
-  $('#panel').classList.remove('open');
   $('#kpis').style.display = 'none';
   $('#legend').style.display = 'none';
   $('#days').style.display = 'none';
@@ -1523,14 +1814,20 @@ function enterBuilding(idx) {
   $('#crumbStatus').style.color = isWarn ? 'var(--leak)' : 'var(--saved)';
   $('#crumbStatus').style.borderColor = isWarn ? 'var(--leakBorder)' : 'var(--saved)';
 
-  goal.t.set(0, 0, 0);
-  goal.z = 2.6;
+  $('#labels').style.display = 'block';
+  renderLabels();
+  renderInteriorPanel(project);
+
+  selectedInteriorRoom = null;
+  goal.t.set(0.5, 0.8, 0.2);
+  goal.z = 2.0;
   isAnimatingToGoal = true;
 }
 
 function exitBuilding() {
   viewMode = 'city';
   interiorRoot.visible = false;
+  while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
   interiorPills.forEach(el => el.remove()); interiorPills = [];
 
   $('#breadcrumbBar').style.display = 'none';
@@ -1758,7 +2055,9 @@ function render() {
   // Position floating callout tags
   const w = innerWidth, h = innerHeight;
   for (const [el, item] of tags) {
-    if (campusMode === 'builder') {
+    if (viewMode === 'interior') {
+      pPos.set(item.x, item.y || 1.8, item.z);
+    } else if (campusMode === 'builder') {
       pPos.set(item.x, 3.8, item.z);
     } else {
       pPos.set(item.g.position.x, item.h || 3, item.g.position.z);
@@ -1978,9 +2277,18 @@ try {
 } catch {}
 
 /* ---------- Init ---------- */
+function getCampusRadius() {
+  if (campusMode === 'builder') {
+    return 14.0;
+  }
+  return Math.max(13.5, (half || 11.44) + 2.0);
+}
+
 function resize() {
-  const w = innerWidth, h = innerHeight;
-  camera.left = -w / 45; camera.right = w / 45; camera.top = h / 45; camera.bottom = -h / 45;
+  const w = innerWidth, h = innerHeight, a = w / h;
+  const R = getCampusRadius();
+  const top = Math.max(R * 1.30, (R * 2.35) / a);
+  camera.left = -top * a; camera.right = top * a; camera.top = top; camera.bottom = -top;
   camera.updateProjectionMatrix(); renderer.setSize(w, h);
   updateDynamicLayout();
 }
