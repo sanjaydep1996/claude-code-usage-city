@@ -25,8 +25,8 @@ DevCity brings together everything developers and engineering teams need to use 
 ## 🏙️ Two Cities in One Cockpit (Live Demo)
 
 In the [Live Demo](https://sanjaydep1996.github.io/claude-code-usage-city/), use the top campus switcher to toggle between two complete 3D environments:
-1. **🏙️ Observability City:** Each skyscraper represents an active project you worked on. Height reflects API spend, tokens, hours, or cache efficiency; glowing beacons highlight prompt cache leaks; click any building to enter the interior room cutaway.
-2. **🏗️ Developer Builder City:** 8 specialized architect pavilions representing the 8 steps of building an enterprise full-stack feature (System Spec, DB Foundry, Backend APIs, Frontend UI, Test QA, Security Gate, Deploy Tower, ROI Citadel). Click any pavilion to get model recommendations, tested copyable prompt templates, and pre-flight checklists!
+1. **🏙️ AppTrack Town:** Each skyscraper represents an active project you worked on. Height reflects API spend, tokens, hours, or cache efficiency; glowing beacons highlight prompt cache leaks; click any building to enter the interior room cutaway.
+2. **🏗️ DevCity:** 8 specialized architect pavilions representing the 8 steps of building an enterprise full-stack feature (System Spec, DB Foundry, Backend APIs, Frontend UI, Test QA, Security Gate, Deploy Tower, ROI Citadel). Click any pavilion to get model recommendations, tested copyable prompt templates, and pre-flight checklists!
 
 ---
 

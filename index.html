@@ -207,7 +207,7 @@
 </script>
 </head>
 <body>
-  <div id="stage" aria-label="3D Two Cities Campus: Observability City & Developer Builder City"></div>
+  <div id="stage" aria-label="3D Two Cities Campus: AppTrack Town & DevCity"></div>
   <div id="labels"></div>
 
   <!-- Breadcrumb Bar when inside building -->
@@ -227,8 +227,8 @@
 
     <!-- Campus Switcher: Two Cities -->
     <div class="seg" role="group" aria-label="City Campus Mode" id="campusSwitch">
-      <button id="btnMonitorCity" data-campus="monitor" aria-pressed="true" title="View historical usage & costs">🏙️ Observability City</button>
-      <button id="btnBuilderCity" data-campus="builder" aria-pressed="false" title="View developer build pavilions & playbooks">🏗️ Builder City</button>
+      <button id="btnMonitorCity" data-campus="monitor" aria-pressed="true" title="View historical usage & costs in AppTrack Town">🏙️ AppTrack Town</button>
+      <button id="btnBuilderCity" data-campus="builder" aria-pressed="false" title="View developer build pavilions & playbooks in DevCity">🏗️ DevCity</button>
     </div>
 
     <div class="spacer"></div>
@@ -275,7 +275,7 @@
     <div style="text-align:left;line-height:1.5;font-size:13px;color:var(--dim);">
       <div style="display:flex;gap:12px;margin:14px 0;align-items:flex-start;">
         <span style="font-size:24px;">🏙️</span>
-        <div><b>1. Two Cities in One Cockpit</b><br>Switch between <b>Observability City</b> (track past token spend and cache leaks) and <b>Builder City</b> (8 production pavilions for your next feature).</div>
+        <div><b>1. Two Cities in One Cockpit</b><br>Switch between <b>AppTrack Town</b> (track past token spend, usage trends, and cache leaks) and <b>DevCity</b> (8 production pavilions to architect, build, test, and ship your next feature).</div>
       </div>
       <div style="display:flex;gap:12px;margin:14px 0;align-items:flex-start;">
         <span style="font-size:24px;">⚡</span>
@@ -467,6 +467,8 @@ function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.B
 
 const CELL = 4.4;
 let B = [], builderPavilions = [], cars = [], people = [], trees = [], streetLights = [], clouds = [], officeWorkers = [], cutawayWorkers = [], half = 10, data;
+let builderCars = [], builderPeople = [], builderTrees = [], builderLights = [], builderClouds = [];
+let holoColumn = null, qaDome = null, roiHalo = null;
 let cityRoot = new THREE.Group(); scene.add(cityRoot);
 let builderRoot = new THREE.Group(); scene.add(builderRoot); builderRoot.visible = false;
 let interiorRoot = new THREE.Group(); scene.add(interiorRoot); interiorRoot.visible = false;
@@ -487,7 +489,9 @@ function createTree(x, z, parent = cityRoot) {
   cone1.position.set(0, .65, 0); cone1.castShadow = true; g.add(cone1);
   const cone2 = new THREE.Mesh(new THREE.ConeGeometry(.32, .55, 5), M.treeLeaf);
   cone2.position.set(0, .98, 0); cone2.castShadow = true; g.add(cone2);
-  parent.add(g); trees.push(g);
+  parent.add(g);
+  if (parent === cityRoot) trees.push(g);
+  else builderTrees.push(g);
 }
 
 /* ---------- Low-poly Animated People ---------- */
@@ -517,17 +521,19 @@ function createStreetLight(x, z, dirX = 1, dirZ = 0) {
 }
 
 /* ---------- Low-poly Fluffy Clouds ---------- */
-function createCloud(x, y, z, scale = 1, speed = 0.4) {
+function createCloud(x, y, z, scale = 1, speed = 0.4, parent = cityRoot) {
   const cg = new THREE.Group(); cg.position.set(x, y, z);
   box(2.8 * scale, .7 * scale, 1.5 * scale, M.cloud, 0, 0, 0, cg);
   box(1.8 * scale, .6 * scale, 1.2 * scale, M.cloud, .9 * scale, .2 * scale, .2 * scale, cg);
   box(1.7 * scale, .6 * scale, 1.1 * scale, M.cloud, -.9 * scale, .1 * scale, -.1 * scale, cg);
   box(1.4 * scale, .5 * scale, 1.0 * scale, M.cloud, .2 * scale, .4 * scale, 0, cg);
-  cityRoot.add(cg);
-  clouds.push({ cg, speed, startY: y, phase: Math.random() * 10 });
+  parent.add(cg);
+  const cObj = { cg, speed, startY: y, phase: Math.random() * 10 };
+  if (parent === cityRoot) clouds.push(cObj);
+  else builderClouds.push(cObj);
 }
 
-/* ---------- Build City 1: Observability Campus ---------- */
+/* ---------- Build City 1: AppTrack Town (Observability Campus) ---------- */
 function buildCity() {
   const P = data.projects.slice(0, 64), cells = spiral(P.length);
   const maxCoord = Math.max(...cells.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z))));
@@ -840,77 +846,306 @@ Requirements:
 ];
 
 function buildBuilderCity() {
-  box(26, 1, 26, M.ground, 0, -.5, 0, builderRoot);
+  box(28, 1, 28, M.ground, 0, -.5, 0, builderRoot);
 
-  // Blueprint plaza roads & rings
-  box(24, .04, 1.2, M.road, 0, .02, 0, builderRoot);
-  box(1.2, .04, 24, M.road, 0, .02, 0, builderRoot);
+  // Four Park Lawns in corners
+  const parkMat = new THREE.MeshStandardMaterial({ color: 0x98C08A, roughness: 0.9 });
+  box(7.5, .02, 7.5, parkMat, -9.5, .01, -9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, 9.5, .01, -9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, -9.5, .01, 9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, 9.5, .01, 9.5, builderRoot);
 
-  const ringGeo = new THREE.RingGeometry(8, 8.2, 48);
+  // Main Cross Avenues
+  box(26, .04, 1.4, M.road, 0, .02, 0, builderRoot);
+  box(1.4, .04, 26, M.road, 0, .02, 0, builderRoot);
+
+  // Dashed lane dividers along avenues
+  for (let k = -12; k <= 12; k += 2) {
+    if (Math.abs(k) > 2) {
+      box(1.0, .02, .08, M.dash, k, .05, 0, builderRoot);
+      box(.08, .02, 1.0, M.dash, 0, .05, k, builderRoot);
+    }
+  }
+
+  // Circular Grand Promenade / Ring Road (radius 8.1, width 1.4)
+  const ringRoadGeo = new THREE.RingGeometry(7.4, 8.8, 64);
+  ringRoadGeo.rotateX(-Math.PI / 2);
+  const ringRoadMesh = new THREE.Mesh(ringRoadGeo, M.road);
+  ringRoadMesh.position.set(0, .03, 0); ringRoadMesh.receiveShadow = true;
+  builderRoot.add(ringRoadMesh);
+
+  // Outer Gold Guide Ring
+  const ringGeo = new THREE.RingGeometry(8.05, 8.15, 64);
   ringGeo.rotateX(-Math.PI / 2);
   const ringMesh = new THREE.Mesh(ringGeo, M.goldRing);
   ringMesh.position.set(0, .05, 0); builderRoot.add(ringMesh);
 
-  // Central Hologram Column
-  box(1.6, .3, 1.6, M.lot, 0, .15, 0, builderRoot);
-  const holoCol = box(.8, 4.2, .8, M.windowGlass, 0, 2.3, 0, builderRoot);
-  holoCol.castShadow = false;
+  // Inner Sidewalk Ring
+  const innerWalkGeo = new THREE.RingGeometry(6.6, 7.3, 48);
+  innerWalkGeo.rotateX(-Math.PI / 2);
+  const innerWalk = new THREE.Mesh(innerWalkGeo, M.lot);
+  innerWalk.position.set(0, .04, 0); builderRoot.add(innerWalk);
+
+  // Central Cyber Plaza Basin & Hologram Fountain
+  const plazaBasin = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.8, .2, 32), M.lot);
+  plazaBasin.position.set(0, .1, 0); builderRoot.add(plazaBasin);
+
+  const waterRing = new THREE.Mesh(new THREE.RingGeometry(1.6, 3.4, 32), new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.7 }));
+  waterRing.rotateX(-Math.PI / 2); waterRing.position.set(0, .22, 0); builderRoot.add(waterRing);
+
+  // Central Hologram Column & Levitating Tech Crystals
+  box(1.4, .4, 1.4, M.windowFrame, 0, .25, 0, builderRoot);
+  holoColumn = new THREE.Mesh(new THREE.OctahedronGeometry(.8, 0), new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.1, emissive: 0x0EA5E9, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }));
+  holoColumn.position.set(0, 2.2, 0); builderRoot.add(holoColumn);
+
+  // Hologram Projector Pylons
+  for (let i = 0; i < 4; i++) {
+    const angle = i * Math.PI / 2 + Math.PI / 4;
+    const px = Math.cos(angle) * 1.6, pz = Math.sin(angle) * 1.6;
+    box(.16, 1.2, .16, M.windowFrame, px, .6, pz, builderRoot);
+    box(.22, .1, .22, M.compScreen, px, 1.25, pz, builderRoot);
+  }
+
+  // Lampposts along the Ring Road & Avenues
+  builderLights = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    const lx = Math.cos(angle) * 9.2, lz = Math.sin(angle) * 9.2;
+    const lg = new THREE.Group(); lg.position.set(lx, 0, lz);
+    box(.08, 1.4, .08, M.lampPost, 0, .7, 0, lg);
+    box(.35, .06, .06, M.lampPost, -Math.cos(angle) * .17, 1.37, -Math.sin(angle) * .17, lg);
+    const head = box(.16, .10, .14, M.lampHead, -Math.cos(angle) * .35, 1.32, -Math.sin(angle) * .35, lg);
+    builderRoot.add(lg);
+    builderLights.push({ lg, head });
+  }
+
+  // Lush Pine Trees planted throughout DevCity
+  builderTrees = [];
+  const treeCoords = [
+    // NW Forest
+    [-11.5, -11.5], [-9.5, -11.8], [-11.8, -9.5], [-10.2, -10.2], [-8.5, -11.5], [-11.5, -8.5],
+    // NE Forest
+    [11.5, -11.5], [9.5, -11.8], [11.8, -9.5], [10.2, -10.2], [8.5, -11.5], [11.5, -8.5],
+    // SW Forest
+    [-11.5, 11.5], [-9.5, 11.8], [-11.8, 9.5], [-10.2, 10.2], [-8.5, 11.5], [-11.5, 8.5],
+    // SE Forest
+    [11.5, 11.5], [9.5, 11.8], [11.8, 9.5], [10.2, 10.2], [8.5, 11.5], [11.5, 8.5],
+    // Central Court Gardens
+    [-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5],
+    [-2.2, -4.8], [2.2, -4.8], [-2.2, 4.8], [2.2, 4.8],
+    [-4.8, -2.2], [4.8, -2.2], [-4.8, 2.2], [4.8, 2.2]
+  ];
+  treeCoords.forEach(([tx, tz]) => {
+    createTree(tx, tz, builderRoot);
+  });
 
   builderPavilions = [];
+
+  // Specialized Architectural Materials
+  const MATS = {
+    glassAzure: new THREE.MeshStandardMaterial({ color: 0x93C5FD, roughness: 0.1, transparent: true, opacity: 0.6, metalness: 0.1 }),
+    steelDark: new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5, metalness: 0.6 }),
+    steelLight: new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.4 }),
+    vaultTitanium: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.7 }),
+    amberGlow: new THREE.MeshStandardMaterial({ color: 0xF59E0B, emissive: 0xD97706, emissiveIntensity: 0.6, roughness: 0.2 }),
+    cyanGlow: new THREE.MeshBasicMaterial({ color: 0x06B6D4 }),
+    backendBlue: new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.4 }),
+    serverGreen: new THREE.MeshBasicMaterial({ color: 0x10B981 }),
+    violetUI: new THREE.MeshStandardMaterial({ color: 0x8B7CF6, roughness: 0.35 }),
+    coralUI: new THREE.MeshStandardMaterial({ color: 0xF43F5E, roughness: 0.35 }),
+    qaGreen: new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3 }),
+    gateObsidian: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.7 }),
+    laserRed: new THREE.MeshBasicMaterial({ color: 0xEF4444 }),
+    gantryOrange: new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.6 }),
+    rocketWhite: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.2 }),
+    roiCitadel: new THREE.MeshStandardMaterial({ color: 0x1D4ED8, roughness: 0.25, metalness: 0.2 }),
+    goldHalo: new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.3, emissive: 0xF59E0B, emissiveIntensity: 0.4 })
+  };
+
   BUILDER_STAGES.forEach(s => {
     const g = new THREE.Group(); g.position.set(s.x, 0, s.z);
-    box(3.8, .08, 3.8, M.lot, 0, .04, 0, g);
+    // Pavilion foundation plinth with crisp border
+    box(4.2, .10, 4.2, M.lot, 0, .05, 0, g);
+    box(3.8, .14, 3.8, MATS.steelLight, 0, .07, 0, g);
 
     // Glowing selection ring
-    const sRingGeo = new THREE.RingGeometry(1.9, 2.05, 32);
+    const sRingGeo = new THREE.RingGeometry(2.1, 2.25, 32);
     sRingGeo.rotateX(-Math.PI / 2);
     const selRing = new THREE.Mesh(sRingGeo, M.goldRing);
-    selRing.position.set(0, .09, 0); selRing.visible = false; g.add(selRing);
+    selRing.position.set(0, .16, 0); selRing.visible = false; g.add(selRing);
 
     // Distinct pavilion architecture per stage
-    if (s.id === 0) { // Spec: Glass spire
-      box(2.2, 5.2, 2.2, M.windowGlass, 0, 2.6, 0, g);
-      box(2.4, .2, 2.4, M.treeWood, 0, .1, 0, g);
-      box(.3, 5.4, .3, M.windowFrame, -1.1, 2.7, -1.1, g);
-      box(.3, 5.4, .3, M.windowFrame, 1.1, 2.7, 1.1, g);
-    } else if (s.id === 1) { // DB: Heavy cylindrical vault
-      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 4.0, 16), M.lampPost);
-      cyl.position.set(0, 2.0, 0); cyl.castShadow = true; g.add(cyl);
-      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.35, .08, 8, 24), M.compScreen);
-      ring1.position.set(0, 2.2, 0); ring1.rotateX(Math.PI / 2); g.add(ring1);
-    } else if (s.id === 2) { // Backend API: Dual wing pavilion
-      box(1.2, 3.8, 2.4, M.lot, -0.7, 1.9, 0, g);
-      box(1.2, 3.8, 2.4, M.lot, 0.7, 1.9, 0, g);
-      box(1.8, .4, 1.8, M.screenCode, 0, 3.2, 0, g);
-    } else if (s.id === 3) { // Frontend UI: Staggered glass terrace
-      box(2.4, 2.0, 2.4, M.windowGlass, 0, 1.0, 0, g);
-      box(1.8, 2.0, 1.8, M.windowGlass, 0, 2.5, 0, g);
-      box(1.2, 1.4, 1.2, M.compScreen, 0, 3.7, 0, g);
-    } else if (s.id === 4) { // Test QA: Hexagonal research station
-      const hex = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 3.2, 6), M.lot);
-      hex.position.set(0, 1.6, 0); hex.castShadow = true; g.add(hex);
-      const dish = new THREE.Mesh(new THREE.SphereGeometry(.6, 8, 8), M.compScreen);
-      dish.position.set(0, 3.5, 0); g.add(dish);
-    } else if (s.id === 5) { // Security: Fortress Gatehouse
-      box(1.0, 4.4, 1.0, M.lampPost, -1.0, 2.2, 0, g);
-      box(1.0, 4.4, 1.0, M.lampPost, 1.0, 2.2, 0, g);
-      box(2.6, 1.0, 1.2, M.lampPost, 0, 4.0, 0, g);
+    if (s.id === 0) {
+      // 1. System Spec: Architectural Azure Glass Spire
+      box(2.4, 5.4, 2.4, MATS.glassAzure, 0, 2.7, 0, g);
+      box(2.6, .3, 2.6, M.treeWood, 0, .15, 0, g);
+      box(.22, 5.8, .22, MATS.steelLight, -1.2, 2.9, -1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, 1.2, 2.9, -1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, -1.2, 2.9, 1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, 1.2, 2.9, 1.2, g);
+      box(2.6, .2, 2.6, MATS.steelDark, 0, 5.5, 0, g);
+      box(1.2, .6, .8, MATS.cyanGlow, 0, 1.0, 0, g);
+
+    } else if (s.id === 1) {
+      // 2. DB Foundry: Titanium Cylindrical Cyber Vault
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 4.2, 24), MATS.vaultTitanium);
+      cyl.position.set(0, 2.1, 0); cyl.castShadow = true; g.add(cyl);
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.45, .09, 8, 32), MATS.amberGlow);
+      ring1.position.set(0, 1.6, 0); ring1.rotateX(Math.PI / 2); g.add(ring1);
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.45, .09, 8, 32), MATS.amberGlow);
+      ring2.position.set(0, 3.0, 0); ring2.rotateX(Math.PI / 2); g.add(ring2);
+      const pod1 = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, 2.4, 12), MATS.steelDark);
+      pod1.position.set(-1.4, 1.2, 0); g.add(pod1);
+      const pod2 = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, 2.4, 12), MATS.steelDark);
+      pod2.position.set(1.4, 1.2, 0); g.add(pod2);
+
+    } else if (s.id === 2) {
+      // 3. Backend API Factory: Dual Wing Cobalt Hub & Server Core
+      box(1.3, 4.2, 2.6, MATS.backendBlue, -0.85, 2.1, 0, g);
+      box(1.3, 4.2, 2.6, MATS.backendBlue, 0.85, 2.1, 0, g);
+      box(1.0, 3.4, 2.2, MATS.glassAzure, 0, 1.7, 0, g);
+      box(.6, 2.8, .8, MATS.serverGreen, 0, 1.4, 0, g);
+      box(2.2, .2, 2.2, MATS.steelDark, 0, 4.3, 0, g);
+      box(.08, 1.2, .08, MATS.steelLight, 0, 4.9, 0, g);
+
+    } else if (s.id === 3) {
+      // 4. Frontend UI Atelier: Stepped Glass Terraces with Violet & Coral accents
+      box(2.6, 1.8, 2.6, MATS.glassAzure, 0, .9, 0, g);
+      box(2.6, .1, 2.6, MATS.violetUI, 0, 1.8, 0, g);
+      box(2.0, 1.8, 2.0, MATS.glassAzure, -.2, 2.7, 0, g);
+      box(2.0, .1, 2.0, MATS.coralUI, -.2, 3.6, 0, g);
+      box(1.4, 1.4, 1.4, MATS.cyanGlow, -.4, 4.3, 0, g);
+
+    } else if (s.id === 4) {
+      // 5. Test & QA Laboratory: Cleanroom Hexagon & Pulsing Emerald Scanner
+      const hex = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.6, 3.4, 6), MATS.steelLight);
+      hex.position.set(0, 1.7, 0); hex.castShadow = true; g.add(hex);
+      box(2.2, .2, 2.2, MATS.qaGreen, 0, 3.4, 0, g);
+      qaDome = new THREE.Mesh(new THREE.SphereGeometry(.75, 16, 16), new THREE.MeshStandardMaterial({ color: 0x10B981, roughness: 0.2, emissive: 0x059669, emissiveIntensity: 0.6 }));
+      qaDome.position.set(0, 4.0, 0); g.add(qaDome);
+
+    } else if (s.id === 5) {
+      // 6. Security Gatehouse: Obsidian Bastion & Red Laser Gate
+      box(1.1, 4.6, 1.1, MATS.gateObsidian, -1.1, 2.3, 0, g);
+      box(1.1, 4.6, 1.1, MATS.gateObsidian, 1.1, 2.3, 0, g);
+      box(2.8, 1.0, 1.3, MATS.gateObsidian, 0, 4.2, 0, g);
+      box(1.2, 2.4, .04, MATS.laserRed, 0, 1.2, 0, g);
       const beacon = new THREE.Mesh(new THREE.ConeGeometry(.35, .8, 4), M.beacon);
-      beacon.position.set(0, 4.8, 0); g.add(beacon);
-    } else if (s.id === 6) { // Deploy Tower: Launch gantry
-      box(1.4, 6.5, 1.4, M.windowFrame, 0, 3.25, 0, g);
-      const rocket = new THREE.Mesh(new THREE.CylinderGeometry(.3, .4, 3.8, 8), M.whiteboard);
-      rocket.position.set(0, 3.5, 0); g.add(rocket);
-    } else { // ROI Citadel: Crystalline spire
-      box(2.2, 7.0, 2.2, M.builderSpire, 0, 3.5, 0, g);
-      const goldTorus = new THREE.Mesh(new THREE.TorusGeometry(1.6, .1, 8, 32), M.goldRing);
-      goldTorus.position.set(0, 5.5, 0); goldTorus.rotateX(Math.PI / 2); g.add(goldTorus);
+      beacon.position.set(0, 5.0, 0); g.add(beacon);
+
+    } else if (s.id === 6) {
+      // 7. Deploy Tower: Vivid Orange Gantry Scaffold & Launch Rocket
+      box(1.6, 6.8, 1.6, MATS.gantryOrange, 0, 3.4, 0, g);
+      const rocket = new THREE.Mesh(new THREE.CylinderGeometry(.32, .42, 4.2, 12), MATS.rocketWhite);
+      rocket.position.set(0, 3.6, 0); g.add(rocket);
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(.32, .8, 12), MATS.backendBlue);
+      nose.position.set(0, 6.1, 0); g.add(nose);
+
+    } else {
+      // 8. ROI Citadel: Majestic Sapphire Skyscraper & Golden Halo Ring
+      box(2.4, 7.5, 2.4, MATS.roiCitadel, 0, 3.75, 0, g);
+      box(1.8, 1.8, 1.8, MATS.cyanGlow, 0, 8.4, 0, g);
+      roiHalo = new THREE.Mesh(new THREE.TorusGeometry(1.8, .12, 12, 36), MATS.goldHalo);
+      roiHalo.position.set(0, 5.5, 0); roiHalo.rotateX(Math.PI / 2); g.add(roiHalo);
     }
 
     g.traverse(o => { if (o.isMesh) { o.userData.builderId = s.id; } });
     builderRoot.add(g);
     builderPavilions.push({ s, g, selRing, x: s.x, z: s.z });
   });
+
+  // Spawn DevCity Pedestrians
+  builderPeople = [];
+  for (let i = 0; i < 10; i++) {
+    const p = new THREE.Group();
+    const cCol = PERSON_COATS[i % PERSON_COATS.length];
+    const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+    const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
+    const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+    const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+    const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+    builderRoot.add(p);
+    builderPeople.push({
+      p, torso, head, leg1, leg2,
+      type: 'circle', radius: 6.9 + (i % 2 === 0 ? .3 : -.3),
+      dir: i % 2 === 0 ? 1 : -1, v: .018 + Math.random() * .012, s: i / 10
+    });
+  }
+  for (let i = 0; i < 10; i++) {
+    const p = new THREE.Group();
+    const cCol = PERSON_COATS[(i + 3) % PERSON_COATS.length];
+    const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+    const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
+    const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+    const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+    const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+    builderRoot.add(p);
+    const axis = i % 2;
+    const lane = (i % 4 < 2 ? .65 : -.65);
+    builderPeople.push({
+      p, torso, head, leg1, leg2,
+      type: 'linear', axis, lane,
+      dir: i % 3 === 0 ? -1 : 1, v: .016 + Math.random() * .014, s: Math.random()
+    });
+  }
+
+  // Spawn DevCity Campus Shuttles / Cars
+  builderCars = [];
+  const shuttleColors = ['#0EA5E9', '#8B7CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+  for (let i = 0; i < 6; i++) {
+    const c = new THREE.Group();
+    const cMat = new THREE.MeshStandardMaterial({ color: shuttleColors[i % shuttleColors.length], roughness: .35, metalness: .2 });
+    box(.75, .30, .40, cMat, 0, .22, 0, c);
+    box(.40, .22, .36, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .44, 0, c);
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, hl, .38, .22, .12, c);
+    box(.04, .08, .08, hl, .38, .22, -.12, c);
+    box(.04, .08, .08, tl, -.38, .22, .12, c);
+    box(.04, .08, .08, tl, -.38, .22, -.12, c);
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .08, .20, c);
+    box(.16, .14, .06, wm, -.22, .08, .20, c);
+    box(.16, .14, .06, wm, .22, .08, -.20, c);
+    box(.16, .14, .06, wm, -.22, .08, -.20, c);
+
+    builderRoot.add(c);
+    builderCars.push({
+      c, type: 'circle', radius: 8.1,
+      dir: i % 2 === 0 ? 1 : -1, v: .022 + Math.random() * .015, s: i / 6
+    });
+  }
+  for (let i = 0; i < 4; i++) {
+    const c = new THREE.Group();
+    const cMat = new THREE.MeshStandardMaterial({ color: shuttleColors[(i + 2) % shuttleColors.length], roughness: .35, metalness: .2 });
+    box(.75, .30, .40, cMat, 0, .22, 0, c);
+    box(.40, .22, .36, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .44, 0, c);
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, hl, .38, .22, .12, c);
+    box(.04, .08, .08, hl, .38, .22, -.12, c);
+    box(.04, .08, .08, tl, -.38, .22, .12, c);
+    box(.04, .08, .08, tl, -.38, .22, -.12, c);
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .08, .20, c);
+    box(.16, .14, .06, wm, -.22, .08, .20, c);
+    box(.16, .14, .06, wm, .22, .08, -.20, c);
+    box(.16, .14, .06, wm, -.22, .08, -.20, c);
+
+    const axis = i % 2;
+    const lane = (i < 2 ? .32 : -.32);
+    builderRoot.add(c);
+    builderCars.push({
+      c, type: 'linear', axis, lane,
+      dir: i % 2 === 0 ? 1 : -1, v: .028 + Math.random() * .02, s: Math.random()
+    });
+  }
+
+  // Fluffy clouds drifting above DevCity
+  builderClouds = [];
+  for (let c = 0; c < 7; c++) {
+    createCloud((Math.random() - .5) * 26, 13 + Math.random() * 4, (Math.random() - .5) * 26, .8 + Math.random() * .5, .35, builderRoot);
+  }
 }
 
 /* ---------- Metric Filtering & Heights ---------- */
@@ -1025,10 +1260,10 @@ function renderSide() {
       `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`
     ).join('');
   } else {
-    // Builder City KPI overview
+    // DevCity KPI overview
     const K = [
       ['React+Spring', 'Active Blueprint', 'Current production stack: React 19 + Spring Boot 3 + PostgreSQL.'],
-      ['8 Stages', 'Build Pavilions', 'End-to-end blueprint: Spec, DB, API, UI, QA, Security, Deploy, ROI.'],
+      ['8 Stages', 'DevCity Pavilions', 'End-to-end blueprint: Spec, DB, API, UI, QA, Security, Deploy, ROI.'],
       ['8 Tested', 'Prompt Templates', 'Tested, deterministic prompts with strict parameter boundaries.'],
       ['Active', 'Local Guard Gates', 'Pre-commit secret scanner and budget alert threshold enabled.'],
       ['90/100 (A)', 'AI Readiness', 'Repo AI Readiness score. Instructions & ignore files optimized.'],
@@ -1038,7 +1273,7 @@ function renderSide() {
       `<div class="kpi card" data-tooltip="${tip}"><b>${v}</b><span>${l}</span></div>`
     ).join('');
 
-    $('#toolsTitle').textContent = 'Builder stages';
+    $('#toolsTitle').textContent = 'DevCity stages';
     $('#toolTotal').textContent = '8 Pavilions';
     $('#toolBars').innerHTML = BUILDER_STAGES.map(s =>
       `<div class="bar" style="cursor:pointer;" onclick="window.selectBuilderById(${s.id})"><span>${esc(s.tag)}</span><span>${esc(s.model.split(' ')[1] || 'Sonnet')}</span><div class="track"><div style="width:100%;background:var(--accent);"></div></div></div>`
@@ -1047,13 +1282,13 @@ function renderSide() {
 
   const fams = Object.fromEntries(FAMS.map(f => [f, 0]));
   for (const p of data.projects) fams[FAMS.includes(p.family) ? p.family : 'other']++;
-  $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">${campusMode === 'monitor' ? 'Colour = main model' : 'Campus: Developer Builder'}</div>` +
+  $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">${campusMode === 'monitor' ? 'Campus: AppTrack Town · Model Families' : 'Campus: DevCity · 8 Build Pavilions'}</div>` +
     (campusMode === 'monitor'
       ? FAMS.filter(f => fams[f]).map(f => `<div><i style="background:${css('--' + f)}"></i>${FAM_NAME[f]} · ${fams[f]}</div>`).join('') +
         `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active recently</div>` +
         `<div style="color:var(--goldRing)"><i style="background:var(--goldRing)"></i>Gold Ring = selected</div>` +
         (leaks.length ? `<div style="color:var(--leak)"><i style="background:var(--leak)"></i>▲ Roof beacon = cache leak</div>` : '')
-      : `<div><i style="background:#38BDF8"></i>8 Production Pavilions</div>` +
+      : `<div><i style="background:#38BDF8"></i>8 DevCity Pavilions</div>` +
         `<div><i style="background:var(--goldRing)"></i>Click any pavilion to open prompts</div>` +
         `<div><i style="background:#10B981"></i>Copyable Playbook Templates</div>`
     );
@@ -1451,6 +1686,75 @@ function render() {
     }
   }
 
+  if (campusMode === 'builder' && builderRoot.visible) {
+    if (!reduceMotion) {
+      // Animate central hologram crystal
+      if (holoColumn) {
+        holoColumn.rotation.y += 0.018;
+        holoColumn.position.y = 2.2 + Math.sin(time * 3) * 0.12;
+      }
+      // Animate QA scanner dome
+      if (qaDome) {
+        qaDome.rotation.y += 0.025;
+        const sc = 1 + 0.08 * Math.sin(time * 5);
+        qaDome.scale.set(sc, sc, sc);
+      }
+      // Animate ROI Citadel golden halo ring
+      if (roiHalo) {
+        roiHalo.rotation.z += 0.03;
+        roiHalo.position.y = 5.5 + Math.sin(time * 2.5) * 0.25;
+      }
+
+      // Animate DevCity Pedestrians
+      for (const pers of builderPeople) {
+        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
+        if (pers.type === 'circle') {
+          const angle = pers.s * Math.PI * 2;
+          pers.p.position.set(Math.cos(angle) * pers.radius, 0, Math.sin(angle) * pers.radius);
+          pers.p.rotation.y = pers.dir > 0 ? -angle : -angle + Math.PI;
+        } else {
+          const pos = -11 + pers.s * 22;
+          if (pers.axis) {
+            pers.p.position.set(pers.lane, 0, pos);
+            pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI;
+          } else {
+            pers.p.position.set(pos, 0, pers.lane);
+            pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          }
+        }
+        const legAngle = Math.sin(pers.s * 45) * 0.35;
+        pers.leg1.rotation.x = legAngle;
+        pers.leg2.rotation.x = -legAngle;
+      }
+
+      // Animate DevCity Campus Shuttles / Cars
+      for (const c of builderCars) {
+        c.s = (c.s + c.v * dt * c.dir + 1) % 1;
+        if (c.type === 'circle') {
+          const angle = c.s * Math.PI * 2;
+          c.c.position.set(Math.cos(angle) * c.radius, 0, Math.sin(angle) * c.radius);
+          c.c.rotation.y = c.dir > 0 ? -angle - Math.PI / 2 : -angle + Math.PI / 2;
+        } else {
+          const a = -11 + c.s * 22;
+          if (c.axis) {
+            c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a);
+            c.c.rotation.y = c.dir > 0 ? 0 : Math.PI;
+          } else {
+            c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28));
+            c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          }
+        }
+      }
+
+      // Animate DevCity Clouds
+      for (const c of builderClouds) {
+        c.cg.position.x += c.speed * dt * 2.2;
+        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
+        if (c.cg.position.x > 18) c.cg.position.x = -18;
+      }
+    }
+  }
+
   // Position floating callout tags
   const w = innerWidth, h = innerHeight;
   for (const [el, item] of tags) {
@@ -1567,12 +1871,12 @@ $('#tableBtn').onclick = () => {
   const container = $('#tableContainer');
   if (campusMode === 'builder') {
     container.innerHTML = `<table class="data-table">
-      <thead><tr><th>Stage</th><th>Pavilion Title</th><th>Recommended Model</th><th>Token Budget</th></tr></thead>
+      <thead><tr><th>DevCity Stage</th><th>Pavilion Title</th><th>Recommended Model</th><th>Token Budget</th></tr></thead>
       <tbody>${BUILDER_STAGES.map(s => `<tr><td><b>${esc(s.tag)}</b></td><td>${esc(s.title)}</td><td>${esc(s.model)}</td><td>${esc(s.budget)}</td></tr>`).join('')}</tbody>
     </table>`;
   } else {
     container.innerHTML = `<table class="data-table">
-      <thead><tr><th>Project</th><th>Model</th><th>API Spend</th><th>Tokens</th><th>Active Time</th><th>Cache Hit</th><th>Status</th></tr></thead>
+      <thead><tr><th>AppTrack Project</th><th>Model</th><th>API Spend</th><th>Tokens</th><th>Active Time</th><th>Cache Hit</th><th>Status</th></tr></thead>
       <tbody>${data.projects.map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.family)}</td><td>${money(p.costUSD || 0)}</td><td>${big(sumTok(p.tokens || {}))}</td><td>${hrs(p.activeHours || 0)}</td><td>${((p.cacheHitRate||0)*100).toFixed(0)}%</td><td>${p.cacheLeak ? '⚠️ Leak' : '● Optimal'}</td></tr>`).join('')}</tbody>
     </table>`;
   }

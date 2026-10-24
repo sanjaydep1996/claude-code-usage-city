@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Two Cities 3D Live Campus**:
-  - Toggle between **Observability City** (monitor past token spend, hours, and cache leaks) and **Developer Builder City** (8 production pavilions).
+  - Toggle between **AppTrack Town** (monitor past token spend, hours, and cache leaks) and **DevCity** (8 production pavilions).
   - 8 Builder Pavilions: System Spec Studio, DB Foundry, Backend API Factory, Frontend UI Atelier, Test QA Lab, Security Gatehouse, Deploy Tower, and ROI Citadel.
   - Interactive camera glide, tested prompt templates with 1-click copy, pre-flight review checklists, and common pitfalls.
 - **The Four Pillars (Monitor, Guide, Guard, Prove)**:
