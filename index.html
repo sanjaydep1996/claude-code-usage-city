@@ -480,12 +480,40 @@ function spiral(n) {
 /* ---------- Low-poly Pine Trees ---------- */
 function createTree(x, z, parent = cityRoot) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
+  const s = .85 + Math.random() * .35;
+  g.scale.set(s, s, s);
   box(.14, .45, .14, M.treeWood, 0, .22, 0, g);
   const cone1 = new THREE.Mesh(new THREE.ConeGeometry(.45, .65, 5), M.treeLeaf);
   cone1.position.set(0, .65, 0); cone1.castShadow = true; g.add(cone1);
   const cone2 = new THREE.Mesh(new THREE.ConeGeometry(.32, .55, 5), M.treeLeaf);
   cone2.position.set(0, .98, 0); cone2.castShadow = true; g.add(cone2);
   parent.add(g); trees.push(g);
+}
+
+/* ---------- Low-poly Animated People ---------- */
+const PERSON_COATS = ['#E8ECF6', '#2563EB', '#8B7CF6', '#22B07D', '#E3A72F', '#0EA5E9', '#F43F5E', '#10B981'];
+function createPerson(lane, pathAxis = 0, dir = 1) {
+  const p = new THREE.Group();
+  const cCol = PERSON_COATS[Math.floor(Math.random() * PERSON_COATS.length)];
+  const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+  const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
+  const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+  const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+  const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+
+  cityRoot.add(p);
+  people.push({ p, torso, head, leg1, leg2, lane, pathAxis, dir, v: .016 + Math.random() * .014, s: Math.random() });
+}
+
+/* ---------- Street Lights (Lampposts) ---------- */
+function createStreetLight(x, z, dirX = 1, dirZ = 0) {
+  const g = new THREE.Group(); g.position.set(x, 0, z);
+  box(.08, 1.4, .08, M.lampPost, 0, .7, 0, g);
+  const armLen = .38;
+  box(dirX ? armLen : .06, .06, dirZ ? armLen : .06, M.lampPost, dirX * armLen / 2, 1.37, dirZ * armLen / 2, g);
+  const head = box(.16, .10, .14, M.lampHead, dirX * armLen, 1.32, dirZ * armLen, g);
+  cityRoot.add(g);
+  streetLights.push({ g, head });
 }
 
 /* ---------- Low-poly Fluffy Clouds ---------- */
@@ -520,15 +548,30 @@ function buildCity() {
     }
   }
 
+  // Streetlights along sidewalk curbs
+  streetLights = [];
+  for (let i = -intR; i <= intR; i++) {
+    for (let j = -intR; j <= intR; j++) {
+      if ((i + j) % 2 === 0) {
+        createStreetLight(i * CELL + .65, j * CELL + .65, 1, 0);
+        createStreetLight(i * CELL - .65, j * CELL - .65, -1, 0);
+      }
+    }
+  }
+
+  // Abundant pine trees in courtyards and open corners
   trees = [];
   for (let i = -intR; i <= intR; i++) {
     for (let j = -intR; j <= intR; j++) {
-      if (Math.random() > 0.45) createTree(i * CELL + 1.25, j * CELL + 1.25, cityRoot);
+      if (Math.random() > 0.35) createTree(i * CELL + 1.25, j * CELL + 1.25, cityRoot);
+      if (Math.random() > 0.55) createTree(i * CELL - 1.25, j * CELL + 1.25, cityRoot);
+      if (Math.random() > 0.65) createTree(i * CELL + 1.25, j * CELL - 1.25, cityRoot);
     }
   }
 
   const maxS = Math.max(...P.map(p => p.sessions || 1), 1);
   const now = Date.now();
+  officeWorkers = [];
 
   P.forEach((p, i) => {
     const [cx, cz] = cells[i], g = new THREE.Group(); g.position.set((cx + .5) * CELL, 0, (cz + .5) * CELL);
@@ -541,7 +584,9 @@ function buildCity() {
     selRing.position.set(0, .07, 0); selRing.visible = false; g.add(selRing);
 
     const fam = FAMS.includes(p.family) ? p.family : 'other';
-    const mat = (FAM_MAT[fam] || FAM_MAT.other).clone(); mat.userData.base = p.family;
+    const famColor = css('--' + fam) || (fam === 'sonnet' ? '#4F8DF7' : fam === 'opus' ? '#8B7CF6' : fam === 'haiku' ? '#22B07D' : fam === 'gemini' ? '#0EA5E9' : '#94A3B8');
+    const mat = new THREE.MeshStandardMaterial({ color: famColor, roughness: .55 });
+    mat.userData.base = p.family;
 
     const FH = 1.05;
     const maxFloors = 10;
@@ -554,6 +599,7 @@ function buildCity() {
       box(w * .36, FH - .06, w * .36, mat, 0, FH / 2, 0, fg);
 
       const h_win = .50, y_win = .58;
+      // Front facade
       box(w, .28, .08, mat, 0, .20, w / 2 - .04, fg);
       box(w, .18, .08, mat, 0, .93, w / 2 - .04, fg);
       box(w * .22, h_win, .08, mat, -w * .39, y_win, w / 2 - .04, fg);
@@ -561,7 +607,10 @@ function buildCity() {
       box(w * .16, h_win, .08, mat, 0, y_win, w / 2 - .04, fg);
       box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, w / 2 - .04, fg);
       box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, w / 2 - .04, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, -w * .19, fg);
 
+      // Back facade
       box(w, .28, .08, mat, 0, .20, -w / 2 + .04, fg);
       box(w, .18, .08, mat, 0, .93, -w / 2 + .04, fg);
       box(w * .22, h_win, .08, mat, -w * .39, y_win, -w / 2 + .04, fg);
@@ -570,6 +619,7 @@ function buildCity() {
       box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, -w / 2 + .04, fg);
       box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, -w / 2 + .04, fg);
 
+      // Left facade
       box(.08, .28, w, mat, -w / 2 + .04, .20, 0, fg);
       box(.08, .18, w, mat, -w / 2 + .04, .93, 0, fg);
       box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, w * .39, fg);
@@ -578,6 +628,7 @@ function buildCity() {
       box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, w * .19, fg);
       box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, -w * .19, fg);
 
+      // Right facade
       box(.08, .28, w, mat, w / 2 - .04, .20, 0, fg);
       box(.08, .18, w, mat, w / 2 - .04, .93, 0, fg);
       box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, w * .39, fg);
@@ -585,6 +636,36 @@ function buildCity() {
       box(.08, h_win, w * .16, mat, w / 2 - .04, y_win, 0, fg);
       box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, w * .19, fg);
       box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, -w * .19, fg);
+
+      // Busy Office Workstation (visible through windows)
+      box(w * .38, .24, .24, M.deskWood, -w * .19, .18, w * .20, fg);
+      box(.20, .16, .03, (f + i) % 2 === 0 ? M.compScreen : M.screenCode, -w * .19, .38, w * .20 - .06, fg);
+
+      // Seated developer typing busily
+      box(.13, .18, .10, M.personCoat, -w * .19, .22, w * .20 + .12, fg);
+      const head = box(.10, .10, .10, M.personSkin, -w * .19, .36, w * .20 + .12, fg);
+      const armL = box(.04, .12, .04, M.personCoat, -w * .19 - .07, .24, w * .20 + .06, fg);
+      const armR = box(.04, .12, .04, M.personCoat, -w * .19 + .07, .24, w * .20 + .06, fg);
+      officeWorkers.push({ type: 'typing', head, armL, armR, seed: Math.random() * 10, floor: fg });
+
+      // Walking developer moving along corridor holding coffee
+      const wg = new THREE.Group(); wg.position.set(w * .19, .06, 0); fg.add(wg);
+      box(.13, .22, .10, M.personCoat, 0, .20, 0, wg);
+      box(.10, .10, .10, M.personSkin, 0, .36, 0, wg);
+      box(.05, .06, .05, M.coffeeCup, .09, .22, .06, wg);
+      const wleg1 = box(.05, .15, .06, M.personPants, -.04, .07, 0, wg);
+      const wleg2 = box(.05, .15, .06, M.personPants, .04, .07, 0, wg);
+      officeWorkers.push({ type: 'walking', group: wg, leg1: wleg1, leg2: wleg2, range: w * .18, speed: .6 + Math.random() * .4, t: Math.random(), floor: fg });
+
+      // Whiteboard brainstorming developer on alternate floors
+      if (f % 2 === 1) {
+        box(w * .35, .36, .02, M.whiteboard, -w * .19, .38, -w * .20, fg);
+        const sg = new THREE.Group(); sg.position.set(-w * .19, .06, -w * .10); fg.add(sg);
+        box(.13, .22, .10, M.personPants, 0, .20, 0, sg);
+        const gHead = box(.10, .10, .10, M.personSkin, 0, .36, 0, sg);
+        const gArm = box(.04, .14, .04, M.personCoat, -.08, .24, 0, sg);
+        officeWorkers.push({ type: 'gesturing', head: gHead, arm: gArm, seed: Math.random() * 10, floor: fg });
+      }
 
       floors.push(fg);
     }
@@ -605,8 +686,52 @@ function buildCity() {
     B.push({ p, g, mat, floors, roof, beacon, selRing, w, fh: FH, h: 0 });
   });
 
+  // Spawn Walking People along sidewalk corridors
+  people = [];
+  for (let i = 0; i < 26; i++) {
+    const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
+    const side = (i % 2 === 0) ? .72 : -.72; // Sidewalk buffer
+    const lane = roadIdx * CELL + side;
+    const axis = (i % 4 < 2) ? 1 : 0;
+    const dir = (i % 3 === 0) ? -1 : 1;
+    createPerson(lane, axis, dir);
+  }
+
+  // Spawn Moving Colorful Cars along road lanes
+  cars = [];
+  const tcalls = (data.totals && data.totals.toolCalls) || 0;
+  const nCars = Math.min(26, Math.max(8, Math.round(tcalls / 160)));
+  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6', '#0EA5E9', '#EC4899', '#10B981', '#F97316'];
+  for (let i = 0; i < nCars; i++) {
+    const c = new THREE.Group();
+    const carMat = new THREE.MeshStandardMaterial({ color: carColors[i % carColors.length], roughness: .4, metalness: .15 });
+    box(.74, .28, .38, carMat, 0, .20, 0, c);
+    box(.38, .22, .34, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .42, 0, c);
+    // Headlights
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    box(.04, .08, .08, hl, .37, .20, .12, c);
+    box(.04, .08, .08, hl, .37, .20, -.12, c);
+    // Taillights
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, tl, -.37, .20, .12, c);
+    box(.04, .08, .08, tl, -.37, .20, -.12, c);
+    // Wheels
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .07, .19, c);
+    box(.16, .14, .06, wm, -.22, .07, .19, c);
+    box(.16, .14, .06, wm, .22, .07, -.19, c);
+    box(.16, .14, .06, wm, -.22, .07, -.19, c);
+
+    const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
+    const lane = roadIdx * CELL;
+    const axis = i % 2;
+    cityRoot.add(c);
+    cars.push({ c, lane, axis, s: Math.random(), dir: i % 4 < 2 ? 1 : -1, v: .026 + Math.random() * .024 });
+  }
+
+  // Low-poly Fluffy Clouds drifting in sky
   clouds = [];
-  for (let c = 0; c < 7; c++) {
+  for (let c = 0; c < 8; c++) {
     createCloud((Math.random() - .5) * half * 2.2, 12 + Math.random() * 5, (Math.random() - .5) * half * 2.2, .8 + Math.random() * .6);
   }
 }
@@ -1223,11 +1348,25 @@ renderer.domElement.addEventListener('pointerup', e => {
   down = null;
 });
 
+renderer.domElement.addEventListener('pointermove', e => {
+  const h = hit(e);
+  const id = h ? h.id : null;
+  if (id !== state.hover) {
+    state.hover = id;
+    renderer.domElement.style.cursor = id != null ? 'pointer' : '';
+  }
+});
+
 /* ---------- Animation Loop ---------- */
 const pPos = new THREE.Vector3();
+const clock = new THREE.Clock();
+
 function render() {
   requestAnimationFrame(render);
   controls.update();
+
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const time = performance.now() * 0.003;
 
   if (isAnimatingToGoal) {
     controls.target.lerp(goal.t, .1);
@@ -1236,6 +1375,79 @@ function render() {
     if (controls.target.distanceTo(goal.t) < .01 && Math.abs(camera.zoom - goal.z) < .01) {
       controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix();
       isAnimatingToGoal = false;
+    }
+  }
+
+  if (campusMode === 'monitor' && cityRoot.visible) {
+    // Animate building selection/hover pulse and beacons
+    for (const [i, b] of B.entries()) {
+      const hot = state.hover === i || state.selected === i;
+      b.mat.emissive.set(hot ? b.mat.color : 0x000000);
+      b.mat.emissiveIntensity = hot ? .25 : 0;
+      if (b.beacon && !reduceMotion) {
+        const s = 1 + .25 * Math.sin(time * 3);
+        b.beacon.scale.set(s, s, s);
+      }
+    }
+
+    if (!reduceMotion) {
+      // Busy office workers inside the buildings
+      for (const w of officeWorkers) {
+        if (!w.floor || !w.floor.visible) continue;
+        if (w.type === 'typing') {
+          w.head.rotation.x = Math.sin(time * 5 + w.seed) * 0.08;
+          w.armL.rotation.x = -0.5 + Math.sin(time * 12 + w.seed) * 0.14;
+          w.armR.rotation.x = -0.5 + Math.cos(time * 12 + w.seed) * 0.14;
+        } else if (w.type === 'walking') {
+          w.t = (w.t + w.speed * dt * 0.25) % 1;
+          const progress = Math.sin(w.t * Math.PI * 2);
+          w.group.position.x = progress * w.range;
+          w.group.rotation.y = Math.cos(w.t * Math.PI * 2) >= 0 ? Math.PI / 2 : -Math.PI / 2;
+          const legAngle = Math.sin(w.t * 24) * 0.35;
+          w.leg1.rotation.x = legAngle;
+          w.leg2.rotation.x = -legAngle;
+        } else if (w.type === 'gesturing') {
+          w.arm.rotation.x = -0.4 + Math.sin(time * 3 + w.seed) * 0.25;
+          w.head.rotation.y = Math.sin(time * 2 + w.seed) * 0.2;
+        }
+      }
+
+      // Animated Pedestrians walking along sidewalks
+      for (const pers of people) {
+        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
+        const pos = -half * .85 + pers.s * (half * 1.7);
+        if (pers.pathAxis) {
+          pers.p.position.set(pers.lane, 0, pos);
+          pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI;
+        } else {
+          pers.p.position.set(pos, 0, pers.lane);
+          pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
+        const legAngle = Math.sin(pers.s * 40) * .35;
+        pers.leg1.rotation.x = legAngle;
+        pers.leg2.rotation.x = -legAngle;
+      }
+
+      // Animated colorful Cars driving on road lanes
+      for (const c of cars) {
+        c.s = (c.s + c.v * dt * c.dir + 1) % 1;
+        const a = -half + .5 + c.s * (half * 2 - 1);
+        if (c.axis) {
+          c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a);
+          c.c.rotation.y = c.dir > 0 ? 0 : Math.PI;
+        } else {
+          c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28));
+          c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
+      }
+
+      // Clouds drifting across the sky
+      const bound = half * 1.4;
+      for (const c of clouds) {
+        c.cg.position.x += c.speed * dt * 2.2;
+        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
+        if (c.cg.position.x > bound) c.cg.position.x = -bound;
+      }
     }
   }
 
@@ -1253,13 +1465,6 @@ function render() {
     el.style.left = `${(pPos.x * .5 + .5) * w}px`;
     el.style.top = `${(-pPos.y * .5 + .5) * h}px`;
   }
-
-  const ct = performance.now() * 0.001;
-  clouds.forEach(c => {
-    c.cg.position.x += c.speed * 0.02;
-    if (c.cg.position.x > half * 1.5) c.cg.position.x = -half * 1.5;
-    c.cg.position.y = c.startY + Math.sin(ct + c.phase) * 0.2;
-  });
 
   renderer.render(scene, camera);
 }
@@ -1411,13 +1616,62 @@ $('#copyCardBtn').onclick = async () => {
   });
 };
 
-/* ---------- Theme Switcher ---------- */
+/* ---------- Theme Switcher & Retheming ---------- */
+function isDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function retheme() {
+  const dark = isDark();
+  for (const [m, v] of themed) {
+    const c = css(v);
+    if (c) m.color.set(c);
+  }
+  for (const b of B) {
+    const fam = FAMS.includes(b.p.family) ? b.p.family : 'other';
+    const c = css('--' + fam);
+    if (c) b.mat.color.set(c);
+  }
+  const winCol = css('--win');
+  if (winCol) M.win.emissive.set(winCol);
+  const winGlow = parseFloat(css('--winGlow'));
+  if (!isNaN(winGlow)) M.win.emissiveIntensity = winGlow;
+
+  if (dark) {
+    M.windowGlass.color.set(0xFFD98A);
+    M.windowGlass.opacity = 0.58;
+    M.windowGlass.emissive.set(0xF59E0B);
+    M.windowGlass.emissiveIntensity = 0.32;
+    M.lampHead.emissiveIntensity = 1.8;
+    M.cloud.color.set(0x28324E);
+    M.cloud.opacity = 0.55;
+  } else {
+    M.windowGlass.color.set(0xCFE0FF);
+    M.windowGlass.opacity = 0.48;
+    M.windowGlass.emissive.set(0x000000);
+    M.windowGlass.emissiveIntensity = 0;
+    M.lampHead.emissiveIntensity = 0.4;
+    M.cloud.color.set(0xFFFFFF);
+    M.cloud.opacity = 0.85;
+  }
+
+  sun.intensity = dark ? .6 : 1.45;
+  hemi.intensity = dark ? .5 : 1.15;
+  if (data) { renderSide(); renderPanel(); }
+}
+
 $('#themeBtn').onclick = () => {
   const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
-  themed.forEach(([m, v]) => { m.color.set(css(v)); });
+  try { localStorage.setItem('ucity-theme', next); } catch {}
+  retheme();
 };
+try {
+  const t = localStorage.getItem('ucity-theme');
+  if (t) document.documentElement.setAttribute('data-theme', t);
+} catch {}
 
 /* ---------- Init ---------- */
 function resize() {
@@ -1433,6 +1687,7 @@ async function init() {
     data = await loadData();
     buildCity();
     buildBuilderCity();
+    retheme();
     applyFilters();
     resize();
     render();
