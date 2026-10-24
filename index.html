@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DevCity · Personal AI Developer Cockpit</title>
+<title>DevCity · Personal AI Developer Cockpit & Companion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
+    --header-h: 70px;
+    --kpis-h: 150px;
     --bg: #EEF1F7; --bg2: #DCE2EF; --ink: #0F172A; --dim: #5B6478; --card: rgba(255,255,255,.94); --line: #D5DBE7;
     --ground: #E4EAE2; --lot: #F3F5FA; --road: #CCD4E2; --dash: #FFFFFF; --win: #CFE0FF; --winGlow: .1;
     --shadow: 0 18px 50px rgba(15,23,42,.14); --accent: #2563EB;
@@ -45,95 +47,155 @@
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
 
-  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 18px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
-  header .brand { pointer-events: auto; }
-  header h1 { margin: 0; font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; pointer-events: none; z-index: 5; flex-wrap: wrap; }
+  header .brand, #campusSwitch, .ctl { pointer-events: auto; }
+  header .brand { cursor: pointer; }
+  #campusSwitch button { cursor: pointer; }
+  header h1 { margin: 0; font-size: 19px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
   header h1 span.badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--accent); color: #fff; vertical-align: middle; }
-  header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
-  .spacer { flex: 1; min-width: 10px; }
-  .ctl { pointer-events: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 7px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
+  header p { margin: 2px 0 0; color: var(--dim); font-size: 12px; }
+  .spacer { flex: 1; min-width: 8px; }
+  .ctl { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); white-space: nowrap; }
   .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--haiku); } .pill.sample .dot { background: var(--fable); }
   .seg { display: inline-flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
-  .seg button { border: 0; background: none; padding: 6px 10px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); }
+  .seg button { border: 0; background: none; padding: 5px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--dim); transition: all .15s ease; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
-  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; min-height: 36px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .btn { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 6px 11px; min-height: 34px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
   .btn:hover { border-color: var(--accent); }
 
-  /* Campus Breadcrumb when inside building (Image 2 style) */
+  /* Breadcrumb Bar when inside building */
   #breadcrumbBar { position: fixed; top: 12px; left: 18px; display: none; align-items: center; gap: 10px; z-index: 8; pointer-events: auto; }
   #breadcrumbBar button.back { background: var(--card); border: 1.5px solid var(--accent); color: var(--accent); font-weight: 800; font-size: 13px; border-radius: 10px; padding: 8px 14px; box-shadow: var(--shadow); }
   #breadcrumbBar .crumb-title { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); }
 
-  #kpis { position: fixed; top: 70px; left: 18px; display: grid; grid-template-columns: repeat(3, auto); gap: 8px; z-index: 4; }
-  .kpi { padding: 9px 13px; min-width: 120px; }
-  .kpi b { display: block; font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .kpi span { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
+  /* Responsive KPIs Container */
+  #kpis {
+    position: fixed;
+    top: calc(var(--header-h, 70px) + 8px);
+    left: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 8px;
+    z-index: 4;
+    transition: top .2s ease;
+  }
+  .kpi { padding: 8px 12px; min-width: 110px; position: relative; cursor: help; }
+  .kpi b { display: block; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .kpi span { font-size: 10px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; }
   .kpi.leak { border-color: var(--leakBorder); } .kpi.leak b { color: var(--leak); }
+  .kpi.health b { color: var(--saved); }
 
-  #legend { position: fixed; left: 18px; top: 250px; padding: 10px 14px; font-size: 12px; font-weight: 600; z-index: 4; display: grid; gap: 5px; }
-  #legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  /* Plain-English Tooltip Hovercards */
+  .kpi[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 105%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    white-space: normal;
+    width: 220px;
+    box-shadow: var(--shadow);
+    z-index: 100;
+    pointer-events: none;
+  }
 
-  #days { position: fixed; left: 18px; bottom: 18px; width: 420px; padding: 12px 14px; z-index: 4; }
-  #days h3, #tools h3 { margin: 0 0 8px; font-size: 12px; font-weight: 800; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
-  #days svg { width: 100%; height: 70px; display: block; }
-  #tools { position: fixed; right: 18px; bottom: 18px; width: 300px; padding: 12px 14px; z-index: 4; }
-  .bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
-  .bar .track { grid-column: 1 / -1; height: 6px; border-radius: 4px; background: var(--lot); overflow: hidden; }
+  /* Responsive Legend */
+  #legend {
+    position: fixed;
+    left: 16px;
+    top: calc(var(--header-h, 70px) + var(--kpis-h, 150px) + 12px);
+    padding: 9px 12px; font-size: 11px; font-weight: 600; z-index: 4; display: grid; gap: 4px;
+    transition: top .2s ease;
+  }
+  #legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+  /* Bottom Panels with Responsive Max-Height and Internal Scroll */
+  #days {
+    position: fixed; left: 16px; bottom: 16px; width: 380px; padding: 10px 12px; z-index: 4;
+    max-height: min(200px, calc(100vh - 360px));
+  }
+  #days h3, #tools h3 { margin: 0 0 6px; font-size: 11px; font-weight: 800; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
+  #days svg { width: 100%; height: 60px; display: block; }
+
+  #tools {
+    position: fixed; right: 16px; bottom: 16px; width: 290px; padding: 10px 12px; z-index: 4;
+    max-height: min(340px, calc(100vh - 280px));
+    overflow-y: auto; scrollbar-width: thin;
+  }
+  .bar { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .bar .track { grid-column: 1 / -1; height: 5px; border-radius: 4px; background: var(--lot); overflow: hidden; }
   .bar .track div { height: 100%; border-radius: 4px; background: var(--accent); }
 
-  /* Floating Campus Callout Tags (Image 1 style) */
+  /* Floating Campus Callout Tags */
   #labels { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
   .tag { position: absolute; transform: translate(-50%, -100%); pointer-events: auto; cursor: pointer; background: #FFFFFF; border: 1.5px solid #D1D5DB;
-         border-radius: 18px; padding: 6px 12px; box-shadow: 0 10px 25px rgba(0,0,0,.15); white-space: nowrap; font-size: 12px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 6px; transition: transform .15s ease, border-color .15s ease; }
+         border-radius: 18px; padding: 5px 11px; box-shadow: 0 10px 25px rgba(0,0,0,.15); white-space: nowrap; font-size: 11px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 5px; transition: transform .15s ease, border-color .15s ease; }
   .tag:hover { transform: translate(-50%, -108%) scale(1.04); }
   .tag .icon { font-size: 10px; }
   .tag.optimal { border-color: #D1D5DB; } .tag.optimal .icon { color: #10B981; }
   .tag.warning { border-color: var(--goldRing); background: #FFFDF9; color: #92400E; } .tag.warning .icon { color: #D97706; }
+  .tag.builder { border-color: #38BDF8; background: #F0F9FF; color: #0369A1; } .tag.builder .icon { color: #0284C7; }
   .tag.sel { border-color: var(--accent); outline: 2px solid var(--accent); }
 
-  /* Floating Interior Room Callout Pills (Image 2 style) */
+  /* Floating Interior Room Callout Pills */
   .interior-pill { position: absolute; transform: translate(-50%, -100%); pointer-events: none; background: #FFFFFF; border: 1.5px solid #D1D5DB;
-                   border-radius: 18px; padding: 6px 12px; font-size: 12px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,.18); color: #111827; display: flex; align-items: center; gap: 6px; }
+                   border-radius: 18px; padding: 5px 11px; font-size: 11px; font-weight: 700; box-shadow: 0 10px 25px rgba(0,0,0,.18); color: #111827; display: flex; align-items: center; gap: 5px; }
   .interior-pill.warn { border-color: var(--goldRing); color: #92400E; background: #FFFDF9; }
   .interior-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
 
-  #panel { position: fixed; top: 70px; right: 16px; bottom: 16px; width: 370px; padding: 18px; overflow-y: auto; z-index: 6; transform: translateX(120%); transition: transform .28s ease; }
+  /* Side Inspector Panel */
+  #panel { position: fixed; top: 68px; right: 16px; bottom: 16px; width: 380px; padding: 18px; overflow-y: auto; z-index: 6; transform: translateX(120%); transition: transform .28s ease; }
   #panel.open { transform: none; }
   #panel .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  #panel h2 { margin: 0; font-size: 19px; font-weight: 800; overflow-wrap: anywhere; }
+  #panel h2 { margin: 0; font-size: 18px; font-weight: 800; overflow-wrap: anywhere; }
   #panel .close { background: none; border: 0; font-size: 22px; color: var(--dim); }
-  .fam { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; margin-top: 4px; }
+  .fam { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; margin-top: 4px; }
   .leak-banner { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: var(--leakBg); border: 1px solid var(--leakBorder); color: var(--leak); font-size: 12px; line-height: 1.4; font-weight: 600; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
-  .grid2 div { background: var(--lot); border-radius: 12px; padding: 9px 11px; }
-  .grid2 b { display: block; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; } .grid2 span { font-size: 11px; color: var(--dim); font-weight: 700; text-transform: uppercase; }
-  .sec { margin-top: 14px; } .sec h4 { margin: 0 0 8px; font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
-  .stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--lot); }
-  .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 8px; font-size: 12px; font-weight: 600; }
-  .keys i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
-  .enter-btn { width: 100%; margin-top: 14px; padding: 12px; font-size: 13px; font-weight: 800; border-radius: 12px; background: var(--accent); color: #fff; border: 0; box-shadow: var(--shadow); transition: transform .15s ease, filter .15s ease; }
+  .grid2 div { background: var(--lot); border-radius: 12px; padding: 8px 10px; }
+  .grid2 b { display: block; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; } .grid2 span { font-size: 10px; color: var(--dim); font-weight: 700; text-transform: uppercase; }
+  .sec { margin-top: 14px; } .sec h4 { margin: 0 0 6px; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; }
+  .stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--lot); }
+  .keys { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; margin-top: 6px; font-size: 11px; font-weight: 600; }
+  .keys i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .enter-btn { width: 100%; margin-top: 12px; padding: 10px; font-size: 12px; font-weight: 800; border-radius: 10px; background: var(--accent); color: #fff; border: 0; box-shadow: var(--shadow); transition: transform .15s ease, filter .15s ease; }
   .enter-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .note { margin-top: 14px; font-size: 11px; color: var(--dim); line-height: 1.45; }
+  .copy-btn { padding: 4px 8px; font-size: 11px; font-weight: 700; border-radius: 6px; border: 1px solid var(--line); background: var(--card); }
+  .prompt-box { background: var(--lot); border: 1px solid var(--line); border-radius: 10px; padding: 10px; font-family: monospace; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; max-height: 180px; overflow-y: auto; }
 
-  /* Modern Native Dialog Styling (compliant with modern-web-guidance) */
+  /* Modern Native Dialogs */
   dialog.native-dialog {
     border: 1px solid var(--line); border-radius: 20px; background: var(--card);
     box-shadow: 0 25px 60px rgba(0,0,0,.35); backdrop-filter: blur(12px);
-    color: var(--ink); padding: 24px; max-width: 900px; width: 92%; max-height: 88vh; overflow-y: auto;
+    color: var(--ink); padding: 22px; max-width: 900px; width: 92%; max-height: 86vh; overflow-y: auto;
   }
   dialog.native-dialog::backdrop { background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(5px); }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .modal-header h2 { margin: 0; font-size: 20px; font-weight: 800; }
-  table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-  table.data-table th, table.data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-  table.data-table th { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-  #shareCardCanvas { width: 100%; max-width: 600px; border-radius: 12px; border: 1px solid var(--line); display: block; margin: 0 auto 16px; box-shadow: var(--shadow); }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .modal-header h2 { margin: 0; font-size: 19px; font-weight: 800; }
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  table.data-table th, table.data-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  table.data-table th { color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; }
 
+  /* Responsive Viewport Overrides */
+  @media (max-width: 1024px) {
+    #kpis { grid-template-columns: repeat(3, auto); }
+    #days { width: 320px; }
+  }
   @media (max-width: 900px) {
-    #kpis { grid-template-columns: repeat(3, 1fr); left: 8px; right: 8px; top: 112px; } .kpi { min-width: 0; padding: 6px 8px; } .kpi b { font-size: 15px; }
-    #legend, #tools { display: none; } #days { left: 8px; right: 8px; width: auto; bottom: 8px; }
-    #panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 62vh; transform: translateY(120%); } #panel.open { transform: none; }
+    #kpis { grid-template-columns: repeat(2, 1fr); left: 8px; right: 8px; }
+    .kpi { min-width: 0; padding: 6px 8px; } .kpi b { font-size: 15px; }
+    #legend, #tools { display: none; }
+    #days { left: 8px; right: 8px; width: auto; bottom: 8px; }
+    #panel { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 60vh; transform: translateY(120%); } #panel.open { transform: none; }
     header p { display: none; }
   }
 </style>
@@ -145,10 +207,10 @@
 </script>
 </head>
 <body>
-  <div id="stage" aria-label="3D city of your AI developer usage. Each building is one project; taller means more usage."></div>
+  <div id="stage" aria-label="3D Two Cities Campus: AppTrack Town & DevCity"></div>
   <div id="labels"></div>
 
-  <!-- Breadcrumb bar when zoomed inside a building (Image 2 style) -->
+  <!-- Breadcrumb Bar when inside building -->
   <div id="breadcrumbBar">
     <button class="back" id="backBtn">← Campus</button>
     <div class="crumb-title" id="crumbProjectTitle">
@@ -158,27 +220,41 @@
   </div>
 
   <header id="mainHeader">
-    <div class="brand">
-      <h1>DevCity <span class="badge">v0.2</span></h1>
-      <p id="sub">Personal AI Developer Cockpit · Multi-Tool Observability</p>
+    <div class="brand" id="brandLogo" title="Reset View">
+      <h1>DevCity <span class="badge">v3.0</span></h1>
+      <p id="sub">Personal AI Developer Cockpit & Companion</p>
     </div>
+
+    <!-- Campus Switcher: Two Cities -->
+    <div class="seg" role="group" aria-label="City Campus Mode" id="campusSwitch">
+      <button id="btnMonitorCity" data-campus="monitor" aria-pressed="true" title="View historical usage & costs in AppTrack Town">🏙️ AppTrack Town</button>
+      <button id="btnBuilderCity" data-campus="builder" aria-pressed="false" title="View developer build pavilions & playbooks in DevCity">🏗️ DevCity</button>
+    </div>
+
     <div class="spacer"></div>
+
     <div class="ctl">
       <span class="pill" id="source"><span class="dot"></span><span id="sourceText">Loading…</span></span>
-      <!-- Source Filter Segmented Control -->
+      <!-- Source Filter (Observability mode only) -->
       <div class="seg" role="group" aria-label="Filter Source Tool" id="toolFilter">
         <button data-src="all" aria-pressed="true">All Tools</button>
         <button data-src="claude-code" aria-pressed="false">Claude Code</button>
         <button data-src="antigravity" aria-pressed="false">Antigravity</button>
       </div>
       <!-- Metric Segmented Control -->
-      <div class="seg" role="group" aria-label="Building height metric">
+      <div class="seg" role="group" aria-label="Building height metric" id="metricFilter">
         <button data-m="cost" aria-pressed="true">Cost</button>
         <button data-m="tokens" aria-pressed="false">Tokens</button>
         <button data-m="hours" aria-pressed="false">Hours</button>
         <button data-m="efficiency" aria-pressed="false" title="Prompt Cache Efficiency">Efficiency</button>
       </div>
-      <button class="btn" id="shareBtn" title="Generate Shareable City Card">📸 Share Card</button>
+
+      <!-- Feature Launchers -->
+      <button class="btn" id="advisorBtn" title="Tool & Model Advisor">🧭 Advisor</button>
+      <button class="btn" id="playbookBtn" title="React + Spring Boot Playbook">📖 Playbook</button>
+      <button class="btn" id="auditBtn" title="Repo AI-Readiness Audit">🛡️ Audit</button>
+      <button class="btn" id="tourBtn" title="Guided Onboarding Tour">💡 Tour</button>
+      <button class="btn" id="shareBtn" title="Generate Shareable City Card">📸 Share</button>
       <button class="btn" id="tableBtn" title="View Accessible Table (Alt+T)">📋 Table</button>
       <button class="btn" id="themeBtn" title="Switch light / dark">◐</button>
     </div>
@@ -186,27 +262,111 @@
 
   <div id="kpis"></div>
   <div id="legend" class="card"></div>
-  <section id="days" class="card"><h3><span>Last 30 days · cost per day</span><span id="peak"></span></h3><div id="daysChart"></div></section>
-  <section id="tools" class="card"><h3><span>Top tools</span><span id="toolTotal"></span></h3><div id="toolBars"></div></section>
+  <section id="days" class="card"><h3><span>Activity Trend · cost per day</span><span id="peak"></span></h3><div id="daysChart"></div></section>
+  <section id="tools" class="card"><h3><span id="toolsTitle">Top tools</span><span id="toolTotal"></span></h3><div id="toolBars"></div></section>
   <aside id="panel" class="card" aria-live="polite"></aside>
 
-  <!-- Accessible Table Dialog (Modern Web Guidance native <dialog>) -->
+  <!-- Interactive First-Run Tour Dialog -->
+  <dialog class="native-dialog" id="tourModal" style="max-width: 580px; text-align: center;">
+    <div class="modal-header">
+      <h2>Welcome to DevCity v3.0</h2>
+      <button class="btn" id="closeTourBtn">×</button>
+    </div>
+    <div style="text-align:left;line-height:1.5;font-size:13px;color:var(--dim);">
+      <div style="display:flex;gap:12px;margin:14px 0;align-items:flex-start;">
+        <span style="font-size:24px;">🏙️</span>
+        <div><b>1. Two Cities in One Cockpit</b><br>Switch between <b>AppTrack Town</b> (track past token spend, usage trends, and cache leaks) and <b>DevCity</b> (8 production pavilions to architect, build, test, and ship your next feature).</div>
+      </div>
+      <div style="display:flex;gap:12px;margin:14px 0;align-items:flex-start;">
+        <span style="font-size:24px;">⚡</span>
+        <div><b>2. Master Prompt Caching & AI Health</b><br>Anthropic prompt caching reduces input costs by 90%. Watch your Weekly AI Health Score and fix cache thrashing leaks.</div>
+      </div>
+      <div style="display:flex;gap:12px;margin:14px 0;align-items:flex-start;">
+        <span style="font-size:24px;">🏗️</span>
+        <div><b>3. Click Any Building to Build or Inspect</b><br>Click any building in the 3D scene to inspect inner rooms or copy production prompt templates and checklists.</div>
+      </div>
+    </div>
+    <button class="enter-btn" id="finishTourBtn" style="margin-top:16px;">Got It! Explore DevCity</button>
+  </dialog>
+
+  <!-- Tool Advisor Dialog -->
+  <dialog class="native-dialog" id="advisorModal" style="max-width: 650px;">
+    <div class="modal-header">
+      <h2>🧭 Tool & Model Advisor</h2>
+      <button class="btn" id="closeAdvisorBtn">Close</button>
+    </div>
+    <p style="font-size:13px;color:var(--dim);margin:0 0 14px;">Deterministic, dated recommendations based on public model benchmarks. 100% local analysis.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;">Task Type</label>
+        <select id="advisorTaskSelect" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;background:var(--lot);border:1px solid var(--line);font-size:13px;">
+          <option value="scaffold">Scaffold Project</option>
+          <option value="api_endpoint" selected>REST API Endpoint</option>
+          <option value="db_migration">Database Migration</option>
+          <option value="ui_component">UI Component</option>
+          <option value="unit_test">Unit Tests</option>
+          <option value="refactor">Multi-file Refactor</option>
+          <option value="regex_grep">Regex / Grep Script</option>
+          <option value="architecture_spec">System Architecture Spec</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;">Scope Size</label>
+        <select id="advisorSizeSelect" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;background:var(--lot);border:1px solid var(--line);font-size:13px;">
+          <option value="quick">Quick (< 15 min)</option>
+          <option value="medium" selected>Medium (1-2 hrs)</option>
+          <option value="complex">Complex (Multi-day)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;">Domain</label>
+        <select id="advisorDomainSelect" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;background:var(--lot);border:1px solid var(--line);font-size:13px;">
+          <option value="fullstack" selected>Fullstack</option>
+          <option value="backend">Backend</option>
+          <option value="frontend">Frontend</option>
+          <option value="database">Database</option>
+          <option value="devops">DevOps</option>
+        </select>
+      </div>
+    </div>
+    <div id="advisorResultCard" style="background:var(--lot);border:1px solid var(--line);border-radius:12px;padding:14px;"></div>
+  </dialog>
+
+  <!-- Playbook Dialog -->
+  <dialog class="native-dialog" id="playbookModal" style="max-width: 820px;">
+    <div class="modal-header">
+      <h2>📖 Production Playbook: React + Spring Boot 3 + Postgres</h2>
+      <button class="btn" id="closePlaybookBtn">Close</button>
+    </div>
+    <div id="playbookContent" style="display:grid;gap:12px;"></div>
+  </dialog>
+
+  <!-- Repo AI-Readiness Audit Dialog -->
+  <dialog class="native-dialog" id="auditModal" style="max-width: 720px;">
+    <div class="modal-header">
+      <h2>🛡️ Repo AI-Readiness Audit</h2>
+      <button class="btn" id="closeAuditBtn">Close</button>
+    </div>
+    <div id="auditContent"></div>
+  </dialog>
+
+  <!-- Accessible Table Dialog -->
   <dialog class="native-dialog" id="tableModal" aria-label="Accessible Projects Table">
     <div class="modal-header">
-      <h2>Accessible Projects Table</h2>
+      <h2>Accessible Projects & Pavilions Table</h2>
       <button class="btn" id="closeTableBtn">Close (Esc)</button>
     </div>
     <div id="tableContainer"></div>
   </dialog>
 
-  <!-- Social Share Card Dialog (Modern Web Guidance native <dialog>) -->
-  <dialog class="native-dialog" id="shareModal" style="max-width: 660px; text-align: center;" aria-label="Social Share Card Generator">
+  <!-- Social Share Card Dialog -->
+  <dialog class="native-dialog" id="shareModal" style="max-width: 660px; text-align: center;">
     <div class="modal-header">
-      <h2>Share Your AI Dev City</h2>
+      <h2>Share Your DevCity Cockpit</h2>
       <button class="btn" id="closeShareBtn">Close</button>
     </div>
-    <p style="font-size:13px;color:var(--dim);margin:0 0 14px;">Anonymized by default. Perfect for X, LinkedIn, or GitHub.</p>
-    <canvas id="shareCardCanvas" width="1200" height="630"></canvas>
+    <p style="font-size:13px;color:var(--dim);margin:0 0 14px;">100% Anonymized. Perfect for sharing AI cost savings on X, LinkedIn, or GitHub.</p>
+    <canvas id="shareCardCanvas" width="1200" height="630" style="width:100%;max-width:600px;border-radius:12px;border:1px solid var(--line);display:block;margin:0 auto 14px;box-shadow:var(--shadow);"></canvas>
     <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;">
       <button class="btn" id="downloadCardBtn" style="background:var(--accent);color:#fff;">📥 Download PNG</button>
       <button class="btn" id="copyCardBtn">📋 Copy to Clipboard</button>
@@ -228,6 +388,8 @@ const money = (v) => v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + (v ||
 const big = (v) => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'k' : String(Math.round(v || 0));
 const hrs = (v) => v < 1 ? Math.round((v || 0) * 60) + ' min' : (v || 0).toFixed(1) + ' h';
 const sumTok = (t) => (t.input || 0) + (t.output || 0) + (t.cacheWrite || 0) + (t.cacheRead || 0);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
 const METRIC = {
   cost: { get: p => p.costUSD || 0, fmt: money },
   tokens: { get: p => sumTok(p.tokens || {}), fmt: big },
@@ -237,12 +399,16 @@ const METRIC = {
 let metric = 'cost';
 let activeSource = 'all';
 let viewMode = 'city'; // 'city' or 'interior'
+let campusMode = 'monitor'; // 'monitor' (City 1) or 'builder' (City 2)
 let interiorProjectIdx = null;
 
 /* ---------- data ---------- */
 async function loadData() {
-  const order = [['./data/usage.json', false], ['./data/sample-usage.json', true]];
-  if (new URLSearchParams(location.search).has('sample')) order.reverse();
+  const isDemoHost = location.hostname.endsWith('github.io') || location.hostname.endsWith('.pages.dev');
+  const preferSample = isDemoHost || new URLSearchParams(location.search).has('sample');
+  const order = preferSample
+    ? [['./data/sample-usage.json', true], ['./data/usage.json', false]]
+    : [['./data/usage.json', false], ['./data/sample-usage.json', true]];
   for (const [url, sample] of order) {
     try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) { const d = await r.json(); d._sample = sample || d.mock; return d; } } catch {}
   }
@@ -261,6 +427,8 @@ const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 500);
 camera.position.set(40, 34, 40);
 camera.zoom = DEFAULT_ZOOM;
 const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 2, 0);
+camera.lookAt(controls.target);
 Object.assign(controls, { enableDamping: true, enablePan: true, minZoom: .3, maxZoom: 5, minPolarAngle: .35, maxPolarAngle: 1.25, autoRotate: !reduceMotion, autoRotateSpeed: .25 });
 controls.addEventListener('start', () => { isAnimatingToGoal = false; controls.autoRotate = false; });
 controls.addEventListener('change', () => { if (!isAnimatingToGoal) { goal.t.copy(controls.target); goal.z = camera.zoom; } });
@@ -291,14 +459,20 @@ const M = {
   whiteboard: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.2 }),
   lampPost: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 }),
   lampHead: new THREE.MeshStandardMaterial({ color: 0xFFFBEB, emissive: 0xFDE047, emissiveIntensity: 0.6, roughness: 0.2 }),
-  cloud: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.9, transparent: true, opacity: 0.85, flatShading: true })
+  cloud: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.9, transparent: true, opacity: 0.85, flatShading: true }),
+  builderPlaza: tmat('--lot', { roughness: .4 }),
+  builderSpire: new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.2, metalness: 0.3 }),
+  builderGlow: new THREE.MeshBasicMaterial({ color: 0x0EA5E9 })
 };
 const FAM_MAT = Object.fromEntries(FAMS.map(f => [f, tmat('--' + f, { roughness: .55 })]));
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; (parent || scene).add(o); return o; }
 
 const CELL = 4.4;
-let B = [], cars = [], people = [], trees = [], streetLights = [], clouds = [], officeWorkers = [], cutawayWorkers = [], half = 10, data;
+let B = [], builderPavilions = [], cars = [], people = [], trees = [], streetLights = [], clouds = [], officeWorkers = [], cutawayWorkers = [], half = 10, data;
+let builderCars = [], builderPeople = [], builderTrees = [], builderLights = [], builderClouds = [];
+let holoColumn = null, qaDome = null, roiHalo = null;
 let cityRoot = new THREE.Group(); scene.add(cityRoot);
+let builderRoot = new THREE.Group(); scene.add(builderRoot); builderRoot.visible = false;
 let interiorRoot = new THREE.Group(); scene.add(interiorRoot); interiorRoot.visible = false;
 
 function spiral(n) {
@@ -307,21 +481,28 @@ function spiral(n) {
   return out;
 }
 
-/* ---------- Low-poly Pine Trees (Image 1 style) ---------- */
-function createTree(x, z) {
+/* ---------- Low-poly Pine Trees ---------- */
+function createTree(x, z, parent = cityRoot) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
+  const s = .85 + Math.random() * .35;
+  g.scale.set(s, s, s);
   box(.14, .45, .14, M.treeWood, 0, .22, 0, g);
   const cone1 = new THREE.Mesh(new THREE.ConeGeometry(.45, .65, 5), M.treeLeaf);
   cone1.position.set(0, .65, 0); cone1.castShadow = true; g.add(cone1);
   const cone2 = new THREE.Mesh(new THREE.ConeGeometry(.32, .55, 5), M.treeLeaf);
   cone2.position.set(0, .98, 0); cone2.castShadow = true; g.add(cone2);
-  cityRoot.add(g); trees.push(g);
+  parent.add(g);
+  if (parent === cityRoot) trees.push(g);
+  else builderTrees.push(g);
 }
 
-/* ---------- Low-poly Animated People (Image 1 style) ---------- */
+/* ---------- Low-poly Animated People ---------- */
+const PERSON_COATS = ['#E8ECF6', '#2563EB', '#8B7CF6', '#22B07D', '#E3A72F', '#0EA5E9', '#F43F5E', '#10B981'];
 function createPerson(lane, pathAxis = 0, dir = 1) {
   const p = new THREE.Group();
-  const torso = box(.22, .32, .16, M.personCoat, 0, .28, 0, p);
+  const cCol = PERSON_COATS[Math.floor(Math.random() * PERSON_COATS.length)];
+  const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+  const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
   const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
   const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
   const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
@@ -342,17 +523,19 @@ function createStreetLight(x, z, dirX = 1, dirZ = 0) {
 }
 
 /* ---------- Low-poly Fluffy Clouds ---------- */
-function createCloud(x, y, z, scale = 1, speed = 0.4) {
+function createCloud(x, y, z, scale = 1, speed = 0.4, parent = cityRoot) {
   const cg = new THREE.Group(); cg.position.set(x, y, z);
   box(2.8 * scale, .7 * scale, 1.5 * scale, M.cloud, 0, 0, 0, cg);
   box(1.8 * scale, .6 * scale, 1.2 * scale, M.cloud, .9 * scale, .2 * scale, .2 * scale, cg);
   box(1.7 * scale, .6 * scale, 1.1 * scale, M.cloud, -.9 * scale, .1 * scale, -.1 * scale, cg);
   box(1.4 * scale, .5 * scale, 1.0 * scale, M.cloud, .2 * scale, .4 * scale, 0, cg);
-  cityRoot.add(cg);
-  clouds.push({ cg, speed, startY: y, phase: Math.random() * 10 });
+  parent.add(cg);
+  const cObj = { cg, speed, startY: y, phase: Math.random() * 10 };
+  if (parent === cityRoot) clouds.push(cObj);
+  else builderClouds.push(cObj);
 }
 
-/* ---------- Build Full City Campus ---------- */
+/* ---------- Build City 1: AppTrack Town (Observability Campus) ---------- */
 function buildCity() {
   const P = data.projects.slice(0, 64), cells = spiral(P.length);
   const maxCoord = Math.max(...cells.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z))));
@@ -361,7 +544,6 @@ function buildCity() {
 
   box(half * 2 + 4, 1, half * 2 + 4, M.ground, 0, -.5, 0, cityRoot);
 
-  // Roads positioned strictly along grid lines between building blocks
   for (let i = -intR; i <= intR; i++) {
     const c = i * CELL;
     box(half * 2, .04, 1.2, M.road, 0, .02, c, cityRoot);
@@ -374,146 +556,7 @@ function buildCity() {
     }
   }
 
-  // Plant Pine Trees in courtyard areas between lots (never on roads or inside buildings)
-  trees = [];
-  for (let i = -intR; i <= intR; i++) {
-    for (let j = -intR; j <= intR; j++) {
-      if (Math.random() > 0.45) {
-        createTree(i * CELL + 1.25, j * CELL + 1.25);
-      }
-    }
-  }
-
-  const maxS = Math.max(...P.map(p => p.sessions || 1), 1);
-  const now = Date.now();
-
-  officeWorkers = [];
-  P.forEach((p, i) => {
-    const [cx, cz] = cells[i], g = new THREE.Group(); g.position.set((cx + .5) * CELL, 0, (cz + .5) * CELL);
-    const w = 1.6 + 1.2 * Math.sqrt((p.sessions || 1) / maxS);
-    box(CELL - 1.2, .06, CELL - 1.2, M.lot, 0, .03, 0, g);
-
-    // Glowing selection ring on lot (Image 1 style)
-    const ringGeo = new THREE.RingGeometry(w * .75, w * .75 + .12, 32);
-    ringGeo.rotateX(-Math.PI / 2);
-    const selRing = new THREE.Mesh(ringGeo, M.goldRing);
-    selRing.position.set(0, .07, 0); selRing.visible = false; g.add(selRing);
-
-    const fam = FAMS.includes(p.family) ? p.family : 'other';
-    const mat = (FAM_MAT[fam] || FAM_MAT.other).clone(); mat.userData.base = p.family;
-
-    const FH = 1.05; // Floor height
-    const maxFloors = 10;
-    const floors = [];
-    const recent = p.lastActive && (now - Date.parse(p.lastActive)) < 3 * 864e5;
-
-    for (let f = 0; f < maxFloors; f++) {
-      const fg = new THREE.Group(); fg.position.set(0, f * FH, 0); g.add(fg);
-
-      // Floor slab & Ceiling slab
-      box(w + .04, .06, w + .04, M.lot, 0, .03, 0, fg);
-      box(w + .04, .06, w + .04, M.lot, 0, FH - .03, 0, fg);
-
-      // Central elevator & utility core
-      box(w * .36, FH - .06, w * .36, mat, 0, FH / 2, 0, fg);
-
-      const h_win = .50, y_win = .58;
-
-      // Front Solid Wall with 2 Punched Windows
-      box(w, .28, .08, mat, 0, .20, w / 2 - .04, fg); // bottom sill
-      box(w, .18, .08, mat, 0, .93, w / 2 - .04, fg); // top header
-      box(w * .22, h_win, .08, mat, -w * .39, y_win, w / 2 - .04, fg); // left pier
-      box(w * .22, h_win, .08, mat, w * .39, y_win, w / 2 - .04, fg);  // right pier
-      box(w * .16, h_win, .08, mat, 0, y_win, w / 2 - .04, fg);        // center pier
-      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, w / 2 - .04, fg); // window 1
-      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, w / 2 - .04, fg);  // window 2
-      box(w * .21, .03, .04, M.windowFrame, -w * .19, .34, w / 2 - .03, fg);     // sill frame 1
-      box(w * .21, .03, .04, M.windowFrame, w * .19, .34, w / 2 - .03, fg);      // sill frame 2
-
-      // Back Solid Wall with 2 Punched Windows
-      box(w, .28, .08, mat, 0, .20, -w / 2 + .04, fg);
-      box(w, .18, .08, mat, 0, .93, -w / 2 + .04, fg);
-      box(w * .22, h_win, .08, mat, -w * .39, y_win, -w / 2 + .04, fg);
-      box(w * .22, h_win, .08, mat, w * .39, y_win, -w / 2 + .04, fg);
-      box(w * .16, h_win, .08, mat, 0, y_win, -w / 2 + .04, fg);
-      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, -w / 2 + .04, fg);
-      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, -w / 2 + .04, fg);
-      box(w * .21, .03, .04, M.windowFrame, -w * .19, .34, -w / 2 + .03, fg);
-      box(w * .21, .03, .04, M.windowFrame, w * .19, .34, -w / 2 + .03, fg);
-
-      // Left Solid Wall with 2 Punched Windows
-      box(.08, .28, w, mat, -w / 2 + .04, .20, 0, fg);
-      box(.08, .18, w, mat, -w / 2 + .04, .93, 0, fg);
-      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, w * .39, fg);
-      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, -w * .39, fg);
-      box(.08, h_win, w * .16, mat, -w / 2 + .04, y_win, 0, fg);
-      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, w * .19, fg);
-      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, -w * .19, fg);
-      box(.04, .03, w * .21, M.windowFrame, -w / 2 + .03, .34, w * .19, fg);
-      box(.04, .03, w * .21, M.windowFrame, -w / 2 + .03, .34, -w * .19, fg);
-
-      // Right Solid Wall with 2 Punched Windows
-      box(.08, .28, w, mat, w / 2 - .04, .20, 0, fg);
-      box(.08, .18, w, mat, w / 2 - .04, .93, 0, fg);
-      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, w * .39, fg);
-      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, -w * .39, fg);
-      box(.08, h_win, w * .16, mat, w / 2 - .04, y_win, 0, fg);
-      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, w * .19, fg);
-      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, -w * .19, fg);
-      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, w * .19, fg);
-      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, -w * .19, fg);
-
-      // Busy Office Workstation (framed directly behind left window)
-      box(w * .38, .24, .24, M.deskWood, -w * .19, .18, w * .20, fg);
-      box(.20, .16, .03, (f + i) % 2 === 0 ? M.compScreen : M.screenCode, -w * .19, .38, w * .20 - .06, fg);
-
-      // Seated developer typing busily
-      box(.13, .18, .10, M.personCoat, -w * .19, .22, w * .20 + .12, fg);
-      const head = box(.10, .10, .10, M.personSkin, -w * .19, .36, w * .20 + .12, fg);
-      const armL = box(.04, .12, .04, M.personCoat, -w * .19 - .07, .24, w * .20 + .06, fg);
-      const armR = box(.04, .12, .04, M.personCoat, -w * .19 + .07, .24, w * .20 + .06, fg);
-      officeWorkers.push({ type: 'typing', head, armL, armR, seed: Math.random() * 10, floor: fg });
-
-      // Walking developer moving along office corridor holding coffee (framed behind right window)
-      const wg = new THREE.Group(); wg.position.set(w * .19, .06, 0); fg.add(wg);
-      box(.13, .22, .10, M.personCoat, 0, .20, 0, wg);
-      box(.10, .10, .10, M.personSkin, 0, .36, 0, wg);
-      box(.05, .06, .05, M.coffeeCup, .09, .22, .06, wg);
-      const leg1 = box(.05, .15, .06, M.personPants, -.04, .07, 0, wg);
-      const leg2 = box(.05, .15, .06, M.personPants, .04, .07, 0, wg);
-      officeWorkers.push({ type: 'walking', group: wg, leg1, leg2, range: w * .18, speed: .6 + Math.random() * .4, t: Math.random(), floor: fg });
-
-      // Brainstorming developer at whiteboard on alternate floors (visible through rear windows)
-      if (f % 2 === 1) {
-        box(w * .35, .36, .02, M.whiteboard, -w * .19, .38, -w * .20, fg);
-        const sg = new THREE.Group(); sg.position.set(-w * .19, .06, -w * .10); fg.add(sg);
-        box(.13, .22, .10, M.personPants, 0, .20, 0, sg);
-        const gHead = box(.10, .10, .10, M.personSkin, 0, .36, 0, sg);
-        const gArm = box(.04, .14, .04, M.personCoat, -.08, .24, 0, sg);
-        officeWorkers.push({ type: 'gesturing', head: gHead, arm: gArm, seed: Math.random() * 10, floor: fg });
-      }
-
-      fg.visible = false;
-      floors.push(fg);
-    }
-
-    const roof = box(w * .55, .28, w * .55, mat, 0, 0, 0, g);
-    box(w * .35, .16, w * .35, M.lot, 0, .20, 0, roof);
-
-    // Cache leak pulsing antenna
-    let beacon = null;
-    if (p.cacheLeak) {
-      beacon = new THREE.Mesh(new THREE.SphereGeometry(.24, 8, 8), M.beacon);
-      beacon.position.set(0, .38, 0);
-      roof.add(beacon);
-    }
-
-    g.traverse(o => { if (o.isMesh) o.userData.pid = i; });
-    cityRoot.add(g);
-    B.push({ p, g, roof, mat, w, floors, FH, beacon, selRing, h: 1, target: 1 });
-  });
-
-  // Spawn Streetlights along sidewalk curbs
+  // Streetlights along sidewalk curbs
   streetLights = [];
   for (let i = -intR; i <= intR; i++) {
     for (let j = -intR; j <= intR; j++) {
@@ -524,23 +567,136 @@ function buildCity() {
     }
   }
 
-  // Spawn Low-Poly Fluffy Clouds drifting in the sky
-  clouds = [];
-  const cloudPositions = [
-    [-half * 1.3, 16, -half * 0.8, 1.1, 0.45],
-    [-half * 0.4, 18, -half * 0.2, 1.3, 0.35],
-    [half * 0.3, 17, -half * 0.9, 0.9, 0.5],
-    [-half * 0.9, 15, half * 0.4, 1.2, 0.4],
-    [half * 0.1, 19, half * 0.2, 1.4, 0.3],
-    [half * 0.8, 16, half * 0.7, 1.0, 0.48],
-    [-half * 0.2, 17, half * 0.9, 1.2, 0.38],
-    [half * 1.1, 18, -half * 0.4, 1.1, 0.42]
-  ];
-  cloudPositions.forEach(([x, y, z, sc, sp]) => createCloud(x, y, z, sc, sp));
+  // Abundant pine trees in courtyards and open corners
+  trees = [];
+  for (let i = -intR; i <= intR; i++) {
+    for (let j = -intR; j <= intR; j++) {
+      if (Math.random() > 0.35) createTree(i * CELL + 1.25, j * CELL + 1.25, cityRoot);
+      if (Math.random() > 0.55) createTree(i * CELL - 1.25, j * CELL + 1.25, cityRoot);
+      if (Math.random() > 0.65) createTree(i * CELL + 1.25, j * CELL - 1.25, cityRoot);
+    }
+  }
 
-  // Spawn Walking People strictly along sidewalk corridors (outside road lanes and outside buildings)
+  const maxS = Math.max(...P.map(p => p.sessions || 1), 1);
+  const now = Date.now();
+  officeWorkers = [];
+
+  P.forEach((p, i) => {
+    const [cx, cz] = cells[i], g = new THREE.Group(); g.position.set((cx + .5) * CELL, 0, (cz + .5) * CELL);
+    const w = 1.6 + 1.2 * Math.sqrt((p.sessions || 1) / maxS);
+    box(CELL - 1.2, .06, CELL - 1.2, M.lot, 0, .03, 0, g);
+
+    const ringGeo = new THREE.RingGeometry(w * .75, w * .75 + .12, 32);
+    ringGeo.rotateX(-Math.PI / 2);
+    const selRing = new THREE.Mesh(ringGeo, M.goldRing);
+    selRing.position.set(0, .07, 0); selRing.visible = false; g.add(selRing);
+
+    const fam = FAMS.includes(p.family) ? p.family : 'other';
+    const famColor = css('--' + fam) || (fam === 'sonnet' ? '#4F8DF7' : fam === 'opus' ? '#8B7CF6' : fam === 'haiku' ? '#22B07D' : fam === 'gemini' ? '#0EA5E9' : '#94A3B8');
+    const mat = new THREE.MeshStandardMaterial({ color: famColor, roughness: .55 });
+    mat.userData.base = p.family;
+
+    const FH = 1.05;
+    const maxFloors = 10;
+    const floors = [];
+
+    for (let f = 0; f < maxFloors; f++) {
+      const fg = new THREE.Group(); fg.position.set(0, f * FH, 0); g.add(fg);
+      box(w + .04, .06, w + .04, M.lot, 0, .03, 0, fg);
+      box(w + .04, .06, w + .04, M.lot, 0, FH - .03, 0, fg);
+      box(w * .36, FH - .06, w * .36, mat, 0, FH / 2, 0, fg);
+
+      const h_win = .50, y_win = .58;
+      // Front facade
+      box(w, .28, .08, mat, 0, .20, w / 2 - .04, fg);
+      box(w, .18, .08, mat, 0, .93, w / 2 - .04, fg);
+      box(w * .22, h_win, .08, mat, -w * .39, y_win, w / 2 - .04, fg);
+      box(w * .22, h_win, .08, mat, w * .39, y_win, w / 2 - .04, fg);
+      box(w * .16, h_win, .08, mat, 0, y_win, w / 2 - .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, w / 2 - .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, w / 2 - .04, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, w * .19, fg);
+      box(.04, .03, w * .21, M.windowFrame, w / 2 - .03, .34, -w * .19, fg);
+
+      // Back facade
+      box(w, .28, .08, mat, 0, .20, -w / 2 + .04, fg);
+      box(w, .18, .08, mat, 0, .93, -w / 2 + .04, fg);
+      box(w * .22, h_win, .08, mat, -w * .39, y_win, -w / 2 + .04, fg);
+      box(w * .22, h_win, .08, mat, w * .39, y_win, -w / 2 + .04, fg);
+      box(w * .16, h_win, .08, mat, 0, y_win, -w / 2 + .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, -w * .19, y_win, -w / 2 + .04, fg);
+      box(w * .20, h_win, .02, M.windowGlass, w * .19, y_win, -w / 2 + .04, fg);
+
+      // Left facade
+      box(.08, .28, w, mat, -w / 2 + .04, .20, 0, fg);
+      box(.08, .18, w, mat, -w / 2 + .04, .93, 0, fg);
+      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, w * .39, fg);
+      box(.08, h_win, w * .22, mat, -w / 2 + .04, y_win, -w * .39, fg);
+      box(.08, h_win, w * .16, mat, -w / 2 + .04, y_win, 0, fg);
+      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, w * .19, fg);
+      box(.02, h_win, w * .20, M.windowGlass, -w / 2 + .04, y_win, -w * .19, fg);
+
+      // Right facade
+      box(.08, .28, w, mat, w / 2 - .04, .20, 0, fg);
+      box(.08, .18, w, mat, w / 2 - .04, .93, 0, fg);
+      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, w * .39, fg);
+      box(.08, h_win, w * .22, mat, w / 2 - .04, y_win, -w * .39, fg);
+      box(.08, h_win, w * .16, mat, w / 2 - .04, y_win, 0, fg);
+      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, w * .19, fg);
+      box(.02, h_win, w * .20, M.windowGlass, w / 2 - .04, y_win, -w * .19, fg);
+
+      // Busy Office Workstation (visible through windows)
+      box(w * .38, .24, .24, M.deskWood, -w * .19, .18, w * .20, fg);
+      box(.20, .16, .03, (f + i) % 2 === 0 ? M.compScreen : M.screenCode, -w * .19, .38, w * .20 - .06, fg);
+
+      // Seated developer typing busily
+      box(.13, .18, .10, M.personCoat, -w * .19, .22, w * .20 + .12, fg);
+      const head = box(.10, .10, .10, M.personSkin, -w * .19, .36, w * .20 + .12, fg);
+      const armL = box(.04, .12, .04, M.personCoat, -w * .19 - .07, .24, w * .20 + .06, fg);
+      const armR = box(.04, .12, .04, M.personCoat, -w * .19 + .07, .24, w * .20 + .06, fg);
+      officeWorkers.push({ type: 'typing', head, armL, armR, seed: Math.random() * 10, floor: fg });
+
+      // Walking developer moving along corridor holding coffee
+      const wg = new THREE.Group(); wg.position.set(w * .19, .06, 0); fg.add(wg);
+      box(.13, .22, .10, M.personCoat, 0, .20, 0, wg);
+      box(.10, .10, .10, M.personSkin, 0, .36, 0, wg);
+      box(.05, .06, .05, M.coffeeCup, .09, .22, .06, wg);
+      const wleg1 = box(.05, .15, .06, M.personPants, -.04, .07, 0, wg);
+      const wleg2 = box(.05, .15, .06, M.personPants, .04, .07, 0, wg);
+      officeWorkers.push({ type: 'walking', group: wg, leg1: wleg1, leg2: wleg2, range: w * .18, speed: .6 + Math.random() * .4, t: Math.random(), floor: fg });
+
+      // Whiteboard brainstorming developer on alternate floors
+      if (f % 2 === 1) {
+        box(w * .35, .36, .02, M.whiteboard, -w * .19, .38, -w * .20, fg);
+        const sg = new THREE.Group(); sg.position.set(-w * .19, .06, -w * .10); fg.add(sg);
+        box(.13, .22, .10, M.personPants, 0, .20, 0, sg);
+        const gHead = box(.10, .10, .10, M.personSkin, 0, .36, 0, sg);
+        const gArm = box(.04, .14, .04, M.personCoat, -.08, .24, 0, sg);
+        officeWorkers.push({ type: 'gesturing', head: gHead, arm: gArm, seed: Math.random() * 10, floor: fg });
+      }
+
+      floors.push(fg);
+    }
+
+    const roof = new THREE.Group();
+    box(w, .25, w, mat, 0, .12, 0, roof);
+    box(w * .5, .35, w * .5, mat, 0, .42, 0, roof);
+    g.add(roof);
+
+    let beacon = null;
+    if (p.cacheLeak) {
+      beacon = new THREE.Mesh(new THREE.ConeGeometry(.35, .8, 4), M.beacon);
+      beacon.position.set(0, 1.0, 0); roof.add(beacon);
+    }
+
+    g.traverse(o => { if (o.isMesh) { o.userData.pid = i; o.userData.isBuilding = true; } });
+    cityRoot.add(g);
+    B.push({ p, g, mat, floors, roof, beacon, selRing, w, fh: FH, h: 0 });
+  });
+
+  // Spawn Walking People along sidewalk corridors
   people = [];
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 26; i++) {
     const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
     const side = (i % 2 === 0) ? .72 : -.72; // Sidewalk buffer
     const lane = roadIdx * CELL + side;
@@ -549,14 +705,31 @@ function buildCity() {
     createPerson(lane, axis, dir);
   }
 
-  // Spawn Moving Cars strictly on asphalt road lanes
+  // Spawn Moving Colorful Cars along road lanes
   cars = [];
   const tcalls = (data.totals && data.totals.toolCalls) || 0;
-  const nCars = Math.min(24, Math.max(4, Math.round(tcalls / 200)));
-  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6', '#0EA5E9'];
+  const nCars = Math.min(26, Math.max(8, Math.round(tcalls / 160)));
+  const carColors = ['#F59E0B', '#4F8DF7', '#22B07D', '#E5484D', '#8B7CF6', '#0EA5E9', '#EC4899', '#10B981', '#F97316'];
   for (let i = 0; i < nCars; i++) {
-    const c = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: carColors[i % carColors.length], roughness: .6 });
-    box(.7, .32, .38, m, 0, .26, 0, c); box(.36, .22, .34, new THREE.MeshStandardMaterial({ color: 0xf4f6fb }), -.05, .5, 0, c);
+    const c = new THREE.Group();
+    const carMat = new THREE.MeshStandardMaterial({ color: carColors[i % carColors.length], roughness: .4, metalness: .15 });
+    box(.74, .28, .38, carMat, 0, .20, 0, c);
+    box(.38, .22, .34, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .42, 0, c);
+    // Headlights
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    box(.04, .08, .08, hl, .37, .20, .12, c);
+    box(.04, .08, .08, hl, .37, .20, -.12, c);
+    // Taillights
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, tl, -.37, .20, .12, c);
+    box(.04, .08, .08, tl, -.37, .20, -.12, c);
+    // Wheels
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .07, .19, c);
+    box(.16, .14, .06, wm, -.22, .07, .19, c);
+    box(.16, .14, .06, wm, .22, .07, -.19, c);
+    box(.16, .14, .06, wm, -.22, .07, -.19, c);
+
     const roadIdx = (Math.floor(Math.random() * (2 * intR + 1)) - intR);
     const lane = roadIdx * CELL;
     const axis = i % 2;
@@ -564,143 +737,447 @@ function buildCity() {
     cars.push({ c, lane, axis, s: Math.random(), dir: i % 4 < 2 ? 1 : -1, v: .026 + Math.random() * .024 });
   }
 
-  Object.assign(sun.shadow.camera, { left: -half, right: half, top: half, bottom: -half, far: 140 }); sun.shadow.camera.updateProjectionMatrix();
-  applyFilters();
+  // Low-poly Fluffy Clouds drifting in sky
+  clouds = [];
+  for (let c = 0; c < 8; c++) {
+    createCloud((Math.random() - .5) * half * 2.2, 12 + Math.random() * 5, (Math.random() - .5) * half * 2.2, .8 + Math.random() * .6);
+  }
 }
 
-/* ---------- Build Inside Building Cutaway View (Image 2 style) ---------- */
-let interiorPills = [];
-let interiorPillsPositions = [];
-function buildInteriorCutaway(project) {
-  while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
-  interiorPills.forEach(el => el.remove()); interiorPills = [];
-
-  const t = project.tokens || {};
-  const fam = FAMS.includes(project.family) ? project.family : 'other';
-
-  // Base platform floor
-  box(14, .6, 11, M.lot, 0, -.3, 0, interiorRoot);
-
-  // 4 Compartments / Rooms with half-height walls (matching Image 2)
-  const WALL_H = 1.8, THICK = .28;
-
-  // Outer walls
-  box(14, WALL_H, THICK, M.interiorWall, 0, WALL_H / 2, -5.35, interiorRoot); // Back
-  box(THICK, WALL_H, 11, M.interiorWall, -6.85, WALL_H / 2, 0, interiorRoot); // Left
-  box(THICK, WALL_H, 11, M.interiorWall, 6.85, WALL_H / 2, 0, interiorRoot);  // Right
-  // Front half walls with entrance corridor opening
-  box(5.5, WALL_H, THICK, M.interiorWall, -4.1, WALL_H / 2, 5.35, interiorRoot);
-  box(5.5, WALL_H, THICK, M.interiorWall, 4.1, WALL_H / 2, 5.35, interiorRoot);
-
-  // Cross divider partitions
-  box(13.6, WALL_H, THICK, M.interiorWall, 0, WALL_H / 2, 0, interiorRoot); // Middle horizontal
-  box(THICK, WALL_H, 10.6, M.interiorWall, 0, WALL_H / 2, 0, interiorRoot); // Middle vertical
-
-  // Circular accent rugs in rooms
-  function addRug(x, z, r = 1.8) {
-    const geo = new THREE.RingGeometry(r - .15, r, 32); geo.rotateX(-Math.PI / 2);
-    const m = new THREE.Mesh(geo, M.goldRing); m.position.set(x, .03, z); interiorRoot.add(m);
+/* ---------- Build City 2: Developer Builder Campus ---------- */
+const BUILDER_STAGES = [
+  {
+    id: 0, tag: '📐 1. System Spec', title: 'System Spec & Architecture Studio',
+    x: -7, z: -7, tool: 'Claude Code / Antigravity', model: 'Claude 3.7 Sonnet', budget: '15k - 40k tokens (~$0.06 - $0.18)',
+    summary: 'Define OpenAPI 3.1 contracts, domain entities, and ADRs before writing code.',
+    prompt: `You are a Principal Software Architect. Design an OpenAPI 3.1 specification and domain model for [FEATURE_NAME].
+Requirements:
+1. Define PostgreSQL entities: [Entities, e.g. Organization, Customer, Invoice, Payment].
+2. Include field types, non-null constraints, and foreign key relationships.
+3. Define RESTful endpoints with HTTP verbs, request/response bodies, and error response schemas (400, 401, 404, 409).
+4. Ensure pagination parameters follow Spring Pageable conventions.`,
+    checklist: ['UUID or BigSerial primary keys', 'Audit fields (created_at, updated_at)', 'Unique constraints for tenant-scoped identifiers'],
+    mistakes: 'Skipping cascade delete rules or omitting 409 Conflict error schemas for unique key violations.'
+  },
+  {
+    id: 1, tag: '🗄️ 2. DB Foundry', title: 'Database & Schema Foundry',
+    x: 0, z: -7.5, tool: 'Claude Code', model: 'Claude 3.7 Sonnet', budget: '6k - 15k tokens (~$0.03 - $0.08)',
+    summary: 'Author idempotent Flyway migrations with explicit indexes and rollback strategies.',
+    prompt: `Generate a Flyway migration script (V1__init_schema.sql) for PostgreSQL 16 based on the domain spec.
+Rules:
+1. Use TIMESTAMPTZ for all timestamps (never TIMESTAMP without timezone).
+2. Add foreign keys with ON DELETE RESTRICT by default.
+3. Add B-tree indexes for all foreign key columns and frequently filtered columns.
+4. Write a corresponding rollback or down-migration verification script.`,
+    checklist: ['No DROP TABLE or unindexed ALTER TABLE', 'Indexes on all foreign key columns', 'Explicit constraint names'],
+    mistakes: 'Missing indexes on foreign keys; using naive VARCHAR(255) for IDs.'
+  },
+  {
+    id: 2, tag: '⚙️ 3. Backend APIs', title: 'Backend API Factory',
+    x: 7, z: -7, tool: 'Claude Code', model: 'Claude 3.7 Sonnet', budget: '10k - 25k tokens (~$0.04 - $0.10)',
+    summary: 'Clean Architecture with Spring Boot 3 / Java 21 records, JPA, and Bean Validation.',
+    prompt: `Implement the backend service for [FEATURE] in Spring Boot 3.3 / Java 21.
+1. JPA Entity classes with @Table and @Column mappings.
+2. Spring Data JPA Repository extending JpaRepository and JpaSpecificationExecutor.
+3. Service interface and @Service implementation wrapped in @Transactional(readOnly = true).
+4. REST Controller with @RestController, @RequestMapping, @Valid annotations.
+5. Global Exception Handler (@RestControllerAdvice) for domain and validation errors.`,
+    checklist: ['DTOs separated from JPA entities', 'Bean validation constraints applied', 'Transaction boundaries declared'],
+    mistakes: 'Exposing JPA entities directly in @RestController; omitting @Transactional on mutation methods.'
+  },
+  {
+    id: 3, tag: '🎨 4. Frontend UI', title: 'Frontend UI Atelier',
+    x: -7.5, z: 0, tool: 'Cursor / Claude Code', model: 'Claude 3.7 Sonnet', budget: '8k - 20k tokens (~$0.03 - $0.08)',
+    summary: 'Responsive React 19 views with TanStack Query, Zod forms, and Tailwind CSS.',
+    prompt: `Build a React 19 TypeScript view for [FEATURE].
+Requirements:
+1. Use TanStack Query (useQuery, useMutation) for fetching and mutating API data.
+2. Build accessible forms with React Hook Form + Zod schema validation.
+3. Style with Tailwind CSS. Support mobile (390x844) and desktop cleanly.
+4. Add loading skeletons, error states, and empty state illustrations.
+5. Use Lucide-React icons and proper ARIA labels on all interactive buttons.`,
+    checklist: ['Deterministic query keys', 'Zod validation matching backend constraints', 'Accessible ARIA labels'],
+    mistakes: 'Failing to invalidate TanStack query cache after mutations; omitting error boundaries.'
+  },
+  {
+    id: 4, tag: '🧪 5. Testing Lab', title: 'Test & QA Laboratory',
+    x: 7.5, z: 0, tool: 'Claude Code', model: 'Claude 3.7 Sonnet', budget: '8k - 18k tokens (~$0.03 - $0.07)',
+    summary: 'Integration tests against real PostgreSQL Testcontainers and Vitest unit suites.',
+    prompt: `Author comprehensive tests for [FEATURE]:
+1. Spring Boot Integration Test using @SpringBootTest and Testcontainers (@Container static PostgreSQLContainer).
+2. Test happy path, validation errors (400), not found (404), and conflict (409).
+3. Frontend unit tests using Vitest + React Testing Library testing form submission and error toast.`,
+    checklist: ['Lightweight postgres:16-alpine image', 'Minimal mocks in integration tests', 'Accessible role queries in Vitest'],
+    mistakes: 'Using H2 in-memory DB instead of real PostgreSQL Testcontainers.'
+  },
+  {
+    id: 5, tag: '🛡️ 6. Security Gate', title: 'Security & Secret Gatehouse',
+    x: -7, z: 7, tool: 'DevCity Guard / Pre-commit', model: 'Rule-Based Local Scanner', budget: '0 tokens (Local)',
+    summary: 'Automated pre-commit secret detection, destructive SQL gates, and budget thresholds.',
+    prompt: `Configure Spring Security 6 for JWT-based stateless authentication.
+Requirements:
+1. SecurityFilterChain bean configuring CORS with explicit allowed origins.
+2. CSRF disabled for stateless JWT REST endpoints.
+3. SessionCreationPolicy.STATELESS.
+4. Passwords hashed with BCrypt (strength >= 12).`,
+    checklist: ['Zero hardcoded API keys', 'Strict CORS whitelist (no * with credentials)', 'BCrypt strength >= 12'],
+    mistakes: 'Enabling wildcard CORS with credentials; hardcoding tokens in tests.'
+  },
+  {
+    id: 6, tag: '🚀 7. Deploy Tower', title: 'CI/CD & Deploy Tower',
+    x: 0, z: 7.5, tool: 'Claude Code', model: 'Claude 3.5 Haiku / Sonnet', budget: '4k - 10k tokens (~$0.01 - $0.03)',
+    summary: 'Multi-stage Dockerfiles, GitHub Actions CI/CD, and non-root execution.',
+    prompt: `Write production Dockerfiles and a docker-compose.yml:
+1. Backend Dockerfile: Multi-stage build with Eclipse Temurin 21-jre-alpine, non-root user spring:spring.
+2. Frontend Dockerfile: Multi-stage build with Nginx Alpine serving static assets.
+3. docker-compose.yml linking frontend, backend, and postgres with health checks.`,
+    checklist: ['Non-root container user (USER spring)', '.dockerignore present', 'Pinned GitHub Action versions'],
+    mistakes: 'Running containers as root; including .git or node_modules in Docker context.'
+  },
+  {
+    id: 7, tag: '📊 8. ROI Citadel', title: 'Executive ROI Citadel',
+    x: 7, z: 7, tool: 'DevCity Prove Engine', model: 'Local Health Engine', budget: '0 tokens (Local)',
+    summary: 'Weekly AI Health Score (A-F), headline prompt cache savings, and value reports.',
+    prompt: `Summarize AI coding ROI across active development projects:
+1. Caching savings percentage and dollars saved.
+2. Active engineering hours vs API spend.
+3. Top 3 habit coaching tips to reduce token waste.`,
+    checklist: ['Prompt cache hit rate > 75%', 'Zero cache thrashing projects', 'Session compacting every 35 turns'],
+    mistakes: 'Defaulting to Opus for trivial commands; skipping prompt compacting.'
   }
-  addRug(-3.4, -2.6, 2.0); addRug(3.4, -2.6, 2.0); addRug(-3.4, 2.6, 2.0); addRug(3.4, 2.6, 2.0);
+];
 
-  cutawayWorkers = [];
-  // Room 1 (Top-Left): "Prompt Cache Vault" (Workstations with typing coders + courier)
-  for (let r = 0; r < 2; r++) {
-    for (let c = 0; c < 2; c++) {
-      const dx = -4.5 + c * 2.2, dz = -3.8 + r * 1.8;
-      box(1.2, .65, .55, M.deskWood, dx, .33, dz, interiorRoot);
-      box(.4, .3, .05, M.compScreen, dx, .8, dz - .15, interiorRoot);
-      box(.2, .26, .16, M.personCoat, dx, .45, dz + .35, interiorRoot);
-      const head = box(.15, .15, .15, M.personSkin, dx, .65, dz + .35, interiorRoot);
-      const armL = box(.06, .16, .06, M.personCoat, dx - .12, .48, dz + .2, interiorRoot);
-      const armR = box(.06, .16, .06, M.personCoat, dx + .12, .48, dz + .2, interiorRoot);
-      cutawayWorkers.push({ type: 'typing', head, armL, armR, seed: dx * 2 });
+function buildBuilderCity() {
+  box(28, 1, 28, M.ground, 0, -.5, 0, builderRoot);
+
+  // Four Park Lawns in corners
+  const parkMat = new THREE.MeshStandardMaterial({ color: 0x98C08A, roughness: 0.9 });
+  box(7.5, .02, 7.5, parkMat, -9.5, .01, -9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, 9.5, .01, -9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, -9.5, .01, 9.5, builderRoot);
+  box(7.5, .02, 7.5, parkMat, 9.5, .01, 9.5, builderRoot);
+
+  // Main Cross Avenues
+  box(26, .04, 1.4, M.road, 0, .02, 0, builderRoot);
+  box(1.4, .04, 26, M.road, 0, .02, 0, builderRoot);
+
+  // Dashed lane dividers along avenues
+  for (let k = -12; k <= 12; k += 2) {
+    if (Math.abs(k) > 2) {
+      box(1.0, .02, .08, M.dash, k, .05, 0, builderRoot);
+      box(.08, .02, 1.0, M.dash, 0, .05, k, builderRoot);
     }
   }
-  // Cache courier carrying files between server racks in Room 1
-  const cw1 = new THREE.Group(); cw1.position.set(-3.2, 0, -2.2); interiorRoot.add(cw1);
-  box(.22, .32, .16, M.personCoat, 0, .28, 0, cw1);
-  box(.16, .16, .16, M.personSkin, 0, .52, 0, cw1);
-  box(.14, .12, .10, M.deskWood, .15, .32, .10, cw1);
-  const cw1Leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, cw1);
-  const cw1Leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, cw1);
-  cutawayWorkers.push({ type: 'walking', group: cw1, leg1: cw1Leg1, leg2: cw1Leg2, baseZ: -2.8, range: 1.2, speed: .5, t: 0 });
 
-  // Room 2 (Top-Right): "Submissions & Output Hub" (Stacked paper boxes & delivery desk)
-  box(2.4, .7, 1.2, M.deskWood, 3.4, .35, -2.8, interiorRoot);
-  box(1.0, .5, .7, new THREE.MeshStandardMaterial({ color: 0xF8FAFC }), 3.4, .85, -2.8, interiorRoot);
-  const cw2 = new THREE.Group(); cw2.position.set(3.4, 0, -1.8); interiorRoot.add(cw2);
-  box(.22, .32, .16, M.personCoat, 0, .28, 0, cw2);
-  box(.16, .16, .16, M.personSkin, 0, .52, 0, cw2);
-  box(.16, .12, .12, M.compScreen, .12, .35, .10, cw2);
-  const cw2Leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, cw2);
-  const cw2Leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, cw2);
-  cutawayWorkers.push({ type: 'walking', group: cw2, leg1: cw2Leg1, leg2: cw2Leg2, baseZ: -2.0, range: 1.0, speed: .6, t: .5 });
+  // Circular Grand Promenade / Ring Road (radius 8.1, width 1.4)
+  const ringRoadGeo = new THREE.RingGeometry(7.4, 8.8, 64);
+  ringRoadGeo.rotateX(-Math.PI / 2);
+  const ringRoadMesh = new THREE.Mesh(ringRoadGeo, M.road);
+  ringRoadMesh.position.set(0, .03, 0); ringRoadMesh.receiveShadow = true;
+  builderRoot.add(ringRoadMesh);
 
-  // Room 3 (Bottom-Left): "Access Security & Tool Invocations Gate" (Turnstiles + lock gate)
-  box(.3, .8, .3, M.interiorWall, -4.2, .4, 2.6, interiorRoot);
-  box(.3, .8, .3, M.interiorWall, -2.6, .4, 2.6, interiorRoot);
-  box(1.4, .08, .08, M.goldRing, -3.4, .55, 2.6, interiorRoot);
-  const cw3 = new THREE.Group(); cw3.position.set(-3.4, 0, 3.5); interiorRoot.add(cw3);
-  box(.22, .32, .16, M.personPants, 0, .28, 0, cw3);
-  const cw3Head = box(.16, .16, .16, M.personSkin, 0, .52, 0, cw3);
-  const cw3Arm = box(.06, .20, .06, M.personCoat, -.16, .35, 0, cw3);
-  cutawayWorkers.push({ type: 'gesturing', head: cw3Head, arm: cw3Arm, seed: 4 });
+  // Outer Gold Guide Ring
+  const ringGeo = new THREE.RingGeometry(8.05, 8.15, 64);
+  ringGeo.rotateX(-Math.PI / 2);
+  const ringMesh = new THREE.Mesh(ringGeo, M.goldRing);
+  ringMesh.position.set(0, .05, 0); builderRoot.add(ringMesh);
 
-  // Room 4 (Bottom-Right): "Model AI Podium & Leaderboard" (Stepped podium with winner character)
-  box(1.0, .3, .8, M.deskWood, 2.5, .15, 2.6, interiorRoot);
-  box(1.0, .5, .8, M.deskWood, 3.5, .25, 2.6, interiorRoot);
-  box(1.0, .2, .8, M.deskWood, 4.5, .1, 2.6, interiorRoot);
-  const cw4 = new THREE.Group(); cw4.position.set(3.5, .35, 2.6); interiorRoot.add(cw4);
-  box(.22, .32, .16, FAM_MAT[fam] || M.personCoat, 0, .30, 0, cw4);
-  box(.16, .16, .16, M.personSkin, 0, .54, 0, cw4);
-  const winArmL = box(.06, .22, .06, M.personCoat, -.18, .45, 0, cw4);
-  const winArmR = box(.06, .22, .06, M.personCoat, .18, .45, 0, cw4);
-  cutawayWorkers.push({ type: 'cheer', armL: winArmL, armR: winArmR });
+  // Inner Sidewalk Ring
+  const innerWalkGeo = new THREE.RingGeometry(6.6, 7.3, 48);
+  innerWalkGeo.rotateX(-Math.PI / 2);
+  const innerWalk = new THREE.Mesh(innerWalkGeo, M.lot);
+  innerWalk.position.set(0, .04, 0); builderRoot.add(innerWalk);
 
-  // Create Interior Floating Callout Pills (Image 2 style)
-  function createInteriorPill(text, worldX, worldY, worldZ, isWarn = false) {
-    const el = document.createElement('div');
-    el.className = 'interior-pill' + (isWarn ? ' warn' : '');
-    el.innerHTML = `<span class="icon">${isWarn ? '▲' : '●'}</span> <span>${text}</span>`;
-    document.body.appendChild(el);
-    interiorPills.push(el);
-    return { el, pos: new THREE.Vector3(worldX, worldY, worldZ) };
+  // Central Cyber Plaza Basin & Hologram Fountain
+  const plazaBasin = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.8, .2, 32), M.lot);
+  plazaBasin.position.set(0, .1, 0); builderRoot.add(plazaBasin);
+
+  const waterRing = new THREE.Mesh(new THREE.RingGeometry(1.6, 3.4, 32), new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.7 }));
+  waterRing.rotateX(-Math.PI / 2); waterRing.position.set(0, .22, 0); builderRoot.add(waterRing);
+
+  // Central Hologram Column & Levitating Tech Crystals
+  box(1.4, .4, 1.4, M.windowFrame, 0, .25, 0, builderRoot);
+  holoColumn = new THREE.Mesh(new THREE.OctahedronGeometry(.8, 0), new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.1, emissive: 0x0EA5E9, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }));
+  holoColumn.position.set(0, 2.2, 0); builderRoot.add(holoColumn);
+
+  // Hologram Projector Pylons
+  for (let i = 0; i < 4; i++) {
+    const angle = i * Math.PI / 2 + Math.PI / 4;
+    const px = Math.cos(angle) * 1.6, pz = Math.sin(angle) * 1.6;
+    box(.16, 1.2, .16, M.windowFrame, px, .6, pz, builderRoot);
+    box(.22, .1, .22, M.compScreen, px, 1.25, pz, builderRoot);
   }
 
-  const hitRatePct = ((project.cacheHitRate || 0) * 100).toFixed(0);
-  const pillData = [
-    createInteriorPill(`Prompt Cache  ${hitRatePct}% (${big(t.cacheRead || 0)} read)`, -3.4, 2.4, -2.6, project.cacheLeak),
-    createInteriorPill(`Spend  ${money(project.costUSD || 0)} (${project.sessions || 0} sessions)`, 3.4, 2.4, -2.6, false),
-    createInteriorPill(`Tool Calls  ${project.toolCalls || 0} invoked`, -3.4, 2.4, 2.6, false),
-    createInteriorPill(`Core Model  ${project.primaryModel || FAM_NAME[fam]}`, 3.4, 2.4, 2.6, false)
+  // Lampposts along the Ring Road & Avenues
+  builderLights = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    const lx = Math.cos(angle) * 9.2, lz = Math.sin(angle) * 9.2;
+    const lg = new THREE.Group(); lg.position.set(lx, 0, lz);
+    box(.08, 1.4, .08, M.lampPost, 0, .7, 0, lg);
+    box(.35, .06, .06, M.lampPost, -Math.cos(angle) * .17, 1.37, -Math.sin(angle) * .17, lg);
+    const head = box(.16, .10, .14, M.lampHead, -Math.cos(angle) * .35, 1.32, -Math.sin(angle) * .35, lg);
+    builderRoot.add(lg);
+    builderLights.push({ lg, head });
+  }
+
+  // Lush Pine Trees planted throughout DevCity
+  builderTrees = [];
+  const treeCoords = [
+    // NW Forest
+    [-11.5, -11.5], [-9.5, -11.8], [-11.8, -9.5], [-10.2, -10.2], [-8.5, -11.5], [-11.5, -8.5],
+    // NE Forest
+    [11.5, -11.5], [9.5, -11.8], [11.8, -9.5], [10.2, -10.2], [8.5, -11.5], [11.5, -8.5],
+    // SW Forest
+    [-11.5, 11.5], [-9.5, 11.8], [-11.8, 9.5], [-10.2, 10.2], [-8.5, 11.5], [-11.5, 8.5],
+    // SE Forest
+    [11.5, 11.5], [9.5, 11.8], [11.8, 9.5], [10.2, 10.2], [8.5, 11.5], [11.5, 8.5],
+    // Central Court Gardens
+    [-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5],
+    [-2.2, -4.8], [2.2, -4.8], [-2.2, 4.8], [2.2, 4.8],
+    [-4.8, -2.2], [4.8, -2.2], [-4.8, 2.2], [4.8, 2.2]
   ];
-  interiorPillsPositions = pillData;
+  treeCoords.forEach(([tx, tz]) => {
+    createTree(tx, tz, builderRoot);
+  });
+
+  builderPavilions = [];
+
+  // Specialized Architectural Materials
+  const MATS = {
+    glassAzure: new THREE.MeshStandardMaterial({ color: 0x93C5FD, roughness: 0.1, transparent: true, opacity: 0.6, metalness: 0.1 }),
+    steelDark: new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5, metalness: 0.6 }),
+    steelLight: new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.4 }),
+    vaultTitanium: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.7 }),
+    amberGlow: new THREE.MeshStandardMaterial({ color: 0xF59E0B, emissive: 0xD97706, emissiveIntensity: 0.6, roughness: 0.2 }),
+    cyanGlow: new THREE.MeshBasicMaterial({ color: 0x06B6D4 }),
+    backendBlue: new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.4 }),
+    serverGreen: new THREE.MeshBasicMaterial({ color: 0x10B981 }),
+    violetUI: new THREE.MeshStandardMaterial({ color: 0x8B7CF6, roughness: 0.35 }),
+    coralUI: new THREE.MeshStandardMaterial({ color: 0xF43F5E, roughness: 0.35 }),
+    qaGreen: new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3 }),
+    gateObsidian: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.7 }),
+    laserRed: new THREE.MeshBasicMaterial({ color: 0xEF4444 }),
+    gantryOrange: new THREE.MeshStandardMaterial({ color: 0xEA580C, roughness: 0.6 }),
+    rocketWhite: new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: 0.2 }),
+    roiCitadel: new THREE.MeshStandardMaterial({ color: 0x1D4ED8, roughness: 0.25, metalness: 0.2 }),
+    goldHalo: new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.3, emissive: 0xF59E0B, emissiveIntensity: 0.4 })
+  };
+
+  BUILDER_STAGES.forEach(s => {
+    const g = new THREE.Group(); g.position.set(s.x, 0, s.z);
+    // Pavilion foundation plinth with crisp border
+    box(4.2, .10, 4.2, M.lot, 0, .05, 0, g);
+    box(3.8, .14, 3.8, MATS.steelLight, 0, .07, 0, g);
+
+    // Glowing selection ring
+    const sRingGeo = new THREE.RingGeometry(2.1, 2.25, 32);
+    sRingGeo.rotateX(-Math.PI / 2);
+    const selRing = new THREE.Mesh(sRingGeo, M.goldRing);
+    selRing.position.set(0, .16, 0); selRing.visible = false; g.add(selRing);
+
+    // Distinct pavilion architecture per stage
+    if (s.id === 0) {
+      // 1. System Spec: Architectural Azure Glass Spire
+      box(2.4, 5.4, 2.4, MATS.glassAzure, 0, 2.7, 0, g);
+      box(2.6, .3, 2.6, M.treeWood, 0, .15, 0, g);
+      box(.22, 5.8, .22, MATS.steelLight, -1.2, 2.9, -1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, 1.2, 2.9, -1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, -1.2, 2.9, 1.2, g);
+      box(.22, 5.8, .22, MATS.steelLight, 1.2, 2.9, 1.2, g);
+      box(2.6, .2, 2.6, MATS.steelDark, 0, 5.5, 0, g);
+      box(1.2, .6, .8, MATS.cyanGlow, 0, 1.0, 0, g);
+
+    } else if (s.id === 1) {
+      // 2. DB Foundry: Titanium Cylindrical Cyber Vault
+      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 4.2, 24), MATS.vaultTitanium);
+      cyl.position.set(0, 2.1, 0); cyl.castShadow = true; g.add(cyl);
+      const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.45, .09, 8, 32), MATS.amberGlow);
+      ring1.position.set(0, 1.6, 0); ring1.rotateX(Math.PI / 2); g.add(ring1);
+      const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.45, .09, 8, 32), MATS.amberGlow);
+      ring2.position.set(0, 3.0, 0); ring2.rotateX(Math.PI / 2); g.add(ring2);
+      const pod1 = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, 2.4, 12), MATS.steelDark);
+      pod1.position.set(-1.4, 1.2, 0); g.add(pod1);
+      const pod2 = new THREE.Mesh(new THREE.CylinderGeometry(.4, .4, 2.4, 12), MATS.steelDark);
+      pod2.position.set(1.4, 1.2, 0); g.add(pod2);
+
+    } else if (s.id === 2) {
+      // 3. Backend API Factory: Dual Wing Cobalt Hub & Server Core
+      box(1.3, 4.2, 2.6, MATS.backendBlue, -0.85, 2.1, 0, g);
+      box(1.3, 4.2, 2.6, MATS.backendBlue, 0.85, 2.1, 0, g);
+      box(1.0, 3.4, 2.2, MATS.glassAzure, 0, 1.7, 0, g);
+      box(.6, 2.8, .8, MATS.serverGreen, 0, 1.4, 0, g);
+      box(2.2, .2, 2.2, MATS.steelDark, 0, 4.3, 0, g);
+      box(.08, 1.2, .08, MATS.steelLight, 0, 4.9, 0, g);
+
+    } else if (s.id === 3) {
+      // 4. Frontend UI Atelier: Stepped Glass Terraces with Violet & Coral accents
+      box(2.6, 1.8, 2.6, MATS.glassAzure, 0, .9, 0, g);
+      box(2.6, .1, 2.6, MATS.violetUI, 0, 1.8, 0, g);
+      box(2.0, 1.8, 2.0, MATS.glassAzure, -.2, 2.7, 0, g);
+      box(2.0, .1, 2.0, MATS.coralUI, -.2, 3.6, 0, g);
+      box(1.4, 1.4, 1.4, MATS.cyanGlow, -.4, 4.3, 0, g);
+
+    } else if (s.id === 4) {
+      // 5. Test & QA Laboratory: Cleanroom Hexagon & Pulsing Emerald Scanner
+      const hex = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.6, 3.4, 6), MATS.steelLight);
+      hex.position.set(0, 1.7, 0); hex.castShadow = true; g.add(hex);
+      box(2.2, .2, 2.2, MATS.qaGreen, 0, 3.4, 0, g);
+      qaDome = new THREE.Mesh(new THREE.SphereGeometry(.75, 16, 16), new THREE.MeshStandardMaterial({ color: 0x10B981, roughness: 0.2, emissive: 0x059669, emissiveIntensity: 0.6 }));
+      qaDome.position.set(0, 4.0, 0); g.add(qaDome);
+
+    } else if (s.id === 5) {
+      // 6. Security Gatehouse: Obsidian Bastion & Red Laser Gate
+      box(1.1, 4.6, 1.1, MATS.gateObsidian, -1.1, 2.3, 0, g);
+      box(1.1, 4.6, 1.1, MATS.gateObsidian, 1.1, 2.3, 0, g);
+      box(2.8, 1.0, 1.3, MATS.gateObsidian, 0, 4.2, 0, g);
+      box(1.2, 2.4, .04, MATS.laserRed, 0, 1.2, 0, g);
+      const beacon = new THREE.Mesh(new THREE.ConeGeometry(.35, .8, 4), M.beacon);
+      beacon.position.set(0, 5.0, 0); g.add(beacon);
+
+    } else if (s.id === 6) {
+      // 7. Deploy Tower: Vivid Orange Gantry Scaffold & Launch Rocket
+      box(1.6, 6.8, 1.6, MATS.gantryOrange, 0, 3.4, 0, g);
+      const rocket = new THREE.Mesh(new THREE.CylinderGeometry(.32, .42, 4.2, 12), MATS.rocketWhite);
+      rocket.position.set(0, 3.6, 0); g.add(rocket);
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(.32, .8, 12), MATS.backendBlue);
+      nose.position.set(0, 6.1, 0); g.add(nose);
+
+    } else {
+      // 8. ROI Citadel: Majestic Sapphire Skyscraper & Golden Halo Ring
+      box(2.4, 7.5, 2.4, MATS.roiCitadel, 0, 3.75, 0, g);
+      box(1.8, 1.8, 1.8, MATS.cyanGlow, 0, 8.4, 0, g);
+      roiHalo = new THREE.Mesh(new THREE.TorusGeometry(1.8, .12, 12, 36), MATS.goldHalo);
+      roiHalo.position.set(0, 5.5, 0); roiHalo.rotateX(Math.PI / 2); g.add(roiHalo);
+    }
+
+    g.traverse(o => { if (o.isMesh) { o.userData.builderId = s.id; } });
+    builderRoot.add(g);
+    builderPavilions.push({ s, g, selRing, x: s.x, z: s.z });
+  });
+
+  // Spawn DevCity Pedestrians
+  builderPeople = [];
+  for (let i = 0; i < 10; i++) {
+    const p = new THREE.Group();
+    const cCol = PERSON_COATS[i % PERSON_COATS.length];
+    const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+    const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
+    const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+    const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+    const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+    builderRoot.add(p);
+    builderPeople.push({
+      p, torso, head, leg1, leg2,
+      type: 'circle', radius: 6.9 + (i % 2 === 0 ? .3 : -.3),
+      dir: i % 2 === 0 ? 1 : -1, v: .018 + Math.random() * .012, s: i / 10
+    });
+  }
+  for (let i = 0; i < 10; i++) {
+    const p = new THREE.Group();
+    const cCol = PERSON_COATS[(i + 3) % PERSON_COATS.length];
+    const coatMat = new THREE.MeshStandardMaterial({ color: cCol, roughness: .6 });
+    const torso = box(.22, .32, .16, coatMat, 0, .28, 0, p);
+    const head = box(.16, .16, .16, M.personSkin, 0, .52, 0, p);
+    const leg1 = box(.08, .22, .09, M.personPants, -.05, .11, 0, p);
+    const leg2 = box(.08, .22, .09, M.personPants, .05, .11, 0, p);
+    builderRoot.add(p);
+    const axis = i % 2;
+    const lane = (i % 4 < 2 ? .65 : -.65);
+    builderPeople.push({
+      p, torso, head, leg1, leg2,
+      type: 'linear', axis, lane,
+      dir: i % 3 === 0 ? -1 : 1, v: .016 + Math.random() * .014, s: Math.random()
+    });
+  }
+
+  // Spawn DevCity Campus Shuttles / Cars
+  builderCars = [];
+  const shuttleColors = ['#0EA5E9', '#8B7CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+  for (let i = 0; i < 6; i++) {
+    const c = new THREE.Group();
+    const cMat = new THREE.MeshStandardMaterial({ color: shuttleColors[i % shuttleColors.length], roughness: .35, metalness: .2 });
+    box(.75, .30, .40, cMat, 0, .22, 0, c);
+    box(.40, .22, .36, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .44, 0, c);
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, hl, .38, .22, .12, c);
+    box(.04, .08, .08, hl, .38, .22, -.12, c);
+    box(.04, .08, .08, tl, -.38, .22, .12, c);
+    box(.04, .08, .08, tl, -.38, .22, -.12, c);
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .08, .20, c);
+    box(.16, .14, .06, wm, -.22, .08, .20, c);
+    box(.16, .14, .06, wm, .22, .08, -.20, c);
+    box(.16, .14, .06, wm, -.22, .08, -.20, c);
+
+    builderRoot.add(c);
+    builderCars.push({
+      c, type: 'circle', radius: 8.1,
+      dir: i % 2 === 0 ? 1 : -1, v: .022 + Math.random() * .015, s: i / 6
+    });
+  }
+  for (let i = 0; i < 4; i++) {
+    const c = new THREE.Group();
+    const cMat = new THREE.MeshStandardMaterial({ color: shuttleColors[(i + 2) % shuttleColors.length], roughness: .35, metalness: .2 });
+    box(.75, .30, .40, cMat, 0, .22, 0, c);
+    box(.40, .22, .36, new THREE.MeshStandardMaterial({ color: 0xEEF2F6, roughness: .2 }), -.05, .44, 0, c);
+    const hl = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
+    const tl = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    box(.04, .08, .08, hl, .38, .22, .12, c);
+    box(.04, .08, .08, hl, .38, .22, -.12, c);
+    box(.04, .08, .08, tl, -.38, .22, .12, c);
+    box(.04, .08, .08, tl, -.38, .22, -.12, c);
+    const wm = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: .9 });
+    box(.16, .14, .06, wm, .22, .08, .20, c);
+    box(.16, .14, .06, wm, -.22, .08, .20, c);
+    box(.16, .14, .06, wm, .22, .08, -.20, c);
+    box(.16, .14, .06, wm, -.22, .08, -.20, c);
+
+    const axis = i % 2;
+    const lane = (i < 2 ? .32 : -.32);
+    builderRoot.add(c);
+    builderCars.push({
+      c, type: 'linear', axis, lane,
+      dir: i % 2 === 0 ? 1 : -1, v: .028 + Math.random() * .02, s: Math.random()
+    });
+  }
+
+  // Fluffy clouds drifting above DevCity
+  builderClouds = [];
+  for (let c = 0; c < 7; c++) {
+    createCloud((Math.random() - .5) * 26, 13 + Math.random() * 4, (Math.random() - .5) * 26, .8 + Math.random() * .5, .35, builderRoot);
+  }
 }
 
+/* ---------- Metric Filtering & Heights ---------- */
 function applyFilters() {
-  const visibleB = B.filter(b => activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource)));
-  const max = Math.max(...visibleB.map(b => METRIC[metric].get(b.p)), 1e-9);
-
-  for (const b of B) {
-    const isVisible = activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource));
-    if (isVisible) {
-      b.target = .35 + 13 * Math.sqrt(METRIC[metric].get(b.p) / max);
-      b.mat.opacity = 1.0; b.mat.transparent = false;
-    } else {
-      b.target = .15;
-      b.mat.opacity = 0.25; b.mat.transparent = true;
-    }
-    if (reduceMotion) b.h = b.target;
+  if (campusMode === 'builder') {
+    renderSide();
+    renderLabels();
+    return;
   }
-  renderLabels(); renderSide(); renderPanel();
+  const maxVal = Math.max(...data.projects.map(p => METRIC[metric].get(p)), 1e-9);
+  B.forEach(b => {
+    const isVisible = activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource));
+    b.g.visible = isVisible;
+    if (!isVisible) return;
+
+    const val = METRIC[metric].get(b.p);
+    const targetFloors = Math.max(1, Math.min(10, Math.ceil((val / maxVal) * 10)));
+    b.floors.forEach((fl, idx) => { fl.visible = idx < targetFloors; });
+    b.roof.position.y = targetFloors * b.fh;
+    b.h = targetFloors * b.fh + .6;
+  });
+  renderSide();
+  renderLabels();
 }
 
 function setMetric(m) {
-  metric = m; document.querySelectorAll('[data-m]').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
+  metric = m; document.querySelectorAll('#metricFilter button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
   applyFilters();
 }
-document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => setMetric(b.dataset.m));
+document.querySelectorAll('#metricFilter button').forEach(b => b.onclick = () => setMetric(b.dataset.m));
 
 document.querySelectorAll('#toolFilter button').forEach(b => {
   b.onclick = () => {
@@ -710,20 +1187,46 @@ document.querySelectorAll('#toolFilter button').forEach(b => {
   };
 });
 
-/* ---------- Floating Campus Labels (Image 1 style) ---------- */
+/* ---------- Floating Labels (Both Cities) ---------- */
 const labelsEl = $('#labels'); let tags = [];
 labelsEl.addEventListener('wheel', e => {
   renderer.domElement.dispatchEvent(new WheelEvent('wheel', e));
 }, { passive: true });
+
 function renderLabels() {
   labelsEl.innerHTML = ''; tags = [];
-  if (viewMode === 'interior') return;
+  if (viewMode === 'interior') {
+    INTERIOR_ROOMS.forEach((r, idx) => {
+      const el = document.createElement('div');
+      el.className = 'tag' + (selectedInteriorRoom === idx ? ' sel' : '');
+      el.style.background = 'rgba(255, 255, 255, 0.95)';
+      el.style.color = '#0F172A';
+      el.style.borderColor = selectedInteriorRoom === idx ? '#3B82F6' : '#CBD5E1';
+      el.style.boxShadow = '0 6px 16px rgba(0,0,0,0.18)';
+      el.innerHTML = `<span>${esc(r.icon)}</span> <span style="font-weight:700;">${esc(r.name)}</span>`;
+      el.onclick = (e) => { e.stopPropagation(); focusInteriorRoom(idx); };
+      labelsEl.appendChild(el);
+      tags.push([el, r]);
+    });
+    return;
+  }
+
+  if (campusMode === 'builder') {
+    builderPavilions.forEach(bp => {
+      const el = document.createElement('div');
+      el.className = 'tag builder' + (state.selectedBuilder === bp.s.id ? ' sel' : '');
+      el.innerHTML = `<span class="icon">●</span> <span>${esc(bp.s.tag)}</span>`;
+      el.onclick = (e) => { e.stopPropagation(); selectBuilder(bp.s.id); };
+      labelsEl.appendChild(el);
+      tags.push([el, bp]);
+    });
+    return;
+  }
 
   const activeB = B.filter(b => activeSource === 'all' || (b.p.sources && b.p.sources.includes(activeSource)));
   const order = [...activeB].sort((a, b) => METRIC[metric].get(b.p) - METRIC[metric].get(a.p));
   const shown = new Set(order.slice(0, innerWidth < 700 ? 3 : 6));
-  if (state.selected != null) shown.add(B[state.selected]);
-  if (state.hover != null) shown.add(B[state.hover]);
+  if (state.selected != null && B[state.selected]) shown.add(B[state.selected]);
 
   for (const b of shown) {
     const el = document.createElement('div');
@@ -737,8 +1240,8 @@ function renderLabels() {
     labelsEl.appendChild(el); tags.push([el, b]);
   }
 }
-const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+/* ---------- Render KPIs & Side Data ---------- */
 function renderSide() {
   const t = data.totals || {};
   const tk = t.tokens || {};
@@ -746,41 +1249,180 @@ function renderSide() {
   const cacheHit = t.cacheHitRate || (all ? (tk.cacheRead || 0) / ((tk.input || 0) + (tk.cacheRead || 0) + (tk.cacheWrite || 0)) : 0);
   const leaks = data.projects.filter(p => p.cacheLeak);
 
-  const K = [
-    [money(t.costUSD || 0), 'API-equivalent'],
-    [big(all), 'Tokens'],
-    [hrs(t.activeHours || 0), 'Active time'],
-    [(cacheHit * 100).toFixed(0) + '%', 'Cache hit rate'],
-    ['+' + money(t.costSavedUSD || 0), 'Cache savings'],
-    [leaks.length ? leaks.length + ' leak' + (leaks.length > 1 ? 's' : '') : 'Optimal', 'Cache leaks', leaks.length > 0]
-  ];
-  $('#kpis').innerHTML = K.map(([v, l, leak]) => `<div class="kpi card${leak ? ' leak' : ''}"><b>${v}</b><span>${l}</span></div>`).join('');
+  // Compute Health Score Grade (A-F)
+  let healthGrade = 'A';
+  if (leaks.length >= 2 || cacheHit < 0.6) healthGrade = 'D';
+  else if (leaks.length === 1 || cacheHit < 0.75) healthGrade = 'B+';
+  else if (cacheHit >= 0.85) healthGrade = 'A+';
+
+  if (campusMode === 'monitor') {
+    const K = [
+      [money(t.costUSD || 0), 'API Spend', 'Billed API list equivalent for prompt and output tokens.'],
+      [big(all), 'Total Tokens', 'Total units processed (in + out + cached). 1k tokens ≈ 750 words.'],
+      [hrs(t.activeHours || 0), 'Active Time', 'Actual interactive AI developer session time.'],
+      [(cacheHit * 100).toFixed(0) + '%', 'Cache Hit Rate', 'Percentage of prompt tokens served from fast cache at 90% discount.'],
+      ['+' + money(t.costSavedUSD || 0), 'Cache Savings', 'Real money saved by reusing prompt history.'],
+      [leaks.length ? leaks.length + ' leak' + (leaks.length > 1 ? 's' : '') : 'Optimal', 'Cache Leaks', 'Projects where cache writes exceeded reads, wasting rewrites.', leaks.length > 0],
+      [healthGrade, 'AI Health Score', 'Weekly engineering hygiene grade (A-F). Click to see tips.', false, true]
+    ];
+    $('#kpis').innerHTML = K.map(([v, l, tip, leak, health]) =>
+      `<div class="kpi card${leak ? ' leak' : ''}${health ? ' health' : ''}" data-tooltip="${tip}"><b>${v}</b><span>${l}</span></div>`
+    ).join('');
+
+    $('#toolsTitle').textContent = 'Top tools';
+    $('#toolTotal').textContent = big(t.toolCalls || 0);
+    const tmax = Math.max(...(data.tools || []).map(t => t[1]), 1);
+    $('#toolBars').innerHTML = (data.tools || []).slice(0, 7).map(([n, c]) =>
+      `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`
+    ).join('');
+  } else {
+    // DevCity KPI overview
+    const K = [
+      ['React+Spring', 'Active Blueprint', 'Current production stack: React 19 + Spring Boot 3 + PostgreSQL.'],
+      ['8 Stages', 'DevCity Pavilions', 'End-to-end blueprint: Spec, DB, API, UI, QA, Security, Deploy, ROI.'],
+      ['8 Tested', 'Prompt Templates', 'Tested, deterministic prompts with strict parameter boundaries.'],
+      ['Active', 'Local Guard Gates', 'Pre-commit secret scanner and budget alert threshold enabled.'],
+      ['90/100 (A)', 'AI Readiness', 'Repo AI Readiness score. Instructions & ignore files optimized.'],
+      ['Sonnet+Haiku', 'Recommended Models', 'Claude 3.7 Sonnet for architecture; Haiku/Flash for fast grep.']
+    ];
+    $('#kpis').innerHTML = K.map(([v, l, tip]) =>
+      `<div class="kpi card" data-tooltip="${tip}"><b>${v}</b><span>${l}</span></div>`
+    ).join('');
+
+    $('#toolsTitle').textContent = 'DevCity stages';
+    $('#toolTotal').textContent = '8 Pavilions';
+    $('#toolBars').innerHTML = BUILDER_STAGES.map(s =>
+      `<div class="bar" style="cursor:pointer;" onclick="window.selectBuilderById(${s.id})"><span>${esc(s.tag)}</span><span>${esc(s.model.split(' ')[1] || 'Sonnet')}</span><div class="track"><div style="width:100%;background:var(--accent);"></div></div></div>`
+    ).join('');
+  }
 
   const fams = Object.fromEntries(FAMS.map(f => [f, 0]));
   for (const p of data.projects) fams[FAMS.includes(p.family) ? p.family : 'other']++;
-  $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">Colour = main model</div>` +
-    FAMS.filter(f => fams[f]).map(f => `<div><i style="background:${css('--' + f)}"></i>${FAM_NAME[f]} · ${fams[f]}</div>`).join('') +
-    `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active in last 3 days</div>` +
-    `<div style="color:var(--goldRing)"><i style="background:var(--goldRing)"></i>Gold Ring = selected lot</div>` +
-    (leaks.length ? `<div style="color:var(--leak)"><i style="background:var(--leak)"></i>▲ Roof beacon = cache leak</div>` : '');
+  $('#legend').innerHTML = `<div style="color:var(--dim);font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.5px">${campusMode === 'monitor' ? 'Campus: AppTrack Town · Model Families' : 'Campus: DevCity · 8 Build Pavilions'}</div>` +
+    (campusMode === 'monitor'
+      ? FAMS.filter(f => fams[f]).map(f => `<div><i style="background:${css('--' + f)}"></i>${FAM_NAME[f]} · ${fams[f]}</div>`).join('') +
+        `<div style="color:var(--dim)"><i style="background:${css('--win')}"></i>Lit windows = active recently</div>` +
+        `<div style="color:var(--goldRing)"><i style="background:var(--goldRing)"></i>Gold Ring = selected</div>` +
+        (leaks.length ? `<div style="color:var(--leak)"><i style="background:var(--leak)"></i>▲ Roof beacon = cache leak</div>` : '')
+      : `<div><i style="background:#38BDF8"></i>8 DevCity Pavilions</div>` +
+        `<div><i style="background:var(--goldRing)"></i>Click any pavilion to open prompts</div>` +
+        `<div><i style="background:#10B981"></i>Copyable Playbook Templates</div>`
+    );
 
   const D = data.daily || [];
-  const mx = Math.max(...D.map(d => d.costUSD), 1e-9), W = 400, H = 70, bw = W / (D.length || 1);
+  const mx = Math.max(...D.map(d => d.costUSD), 1e-9), W = 380, H = 60, bw = W / (D.length || 1);
   const peak = D.reduce((a, d) => d.costUSD > a.costUSD ? d : a, D[0] || { costUSD: 0 });
   $('#peak').textContent = peak ? 'peak ' + money(peak.costUSD) : '';
   $('#daysChart').innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Cost per day">${D.map((d, i) => { const h = d.costUSD / mx * (H - 4);
     return `<rect x="${i * bw + 1}" y="${H - h}" width="${Math.max(bw - 2, 1)}" height="${Math.max(h, d.costUSD ? 2 : 1)}" rx="2" fill="${d.costUSD ? css('--accent') : css('--line')}"><title>${d.date}: ${money(d.costUSD)} · ${big(d.tokens)} tokens · ${d.sessions} sessions</title></rect>`; }).join('')}</svg>`;
 
-  const tmax = Math.max(...(data.tools || []).map(t => t[1]), 1);
-  $('#toolTotal').textContent = big(t.toolCalls || 0);
-  $('#toolBars').innerHTML = (data.tools || []).slice(0, 7).map(([n, c]) => `<div class="bar"><span>${esc(n)}</span><span>${big(c)}</span><div class="track"><div style="width:${c / tmax * 100}%"></div></div></div>`).join('');
   $('#source').classList.toggle('sample', data._sample);
   $('#sourceText').textContent = data._sample ? 'Sample Cockpit' : (data.sources && data.sources.length ? data.sources.join(' + ') : 'Active Data');
+
+  updateDynamicLayout();
 }
 
-const state = { selected: null, hover: null };
+/* ---------- Dynamic Responsive Layout Calculations ---------- */
+function updateDynamicLayout() {
+  const headerEl = $('#mainHeader');
+  if (headerEl) {
+    const hh = headerEl.offsetHeight;
+    document.documentElement.style.setProperty('--header-h', `${hh}px`);
+  }
+  const kpisEl = $('#kpis');
+  if (kpisEl && kpisEl.style.display !== 'none') {
+    const kh = kpisEl.offsetHeight;
+    document.documentElement.style.setProperty('--kpis-h', `${kh}px`);
+  }
+}
+window.addEventListener('resize', updateDynamicLayout);
+if (window.ResizeObserver) {
+  new ResizeObserver(updateDynamicLayout).observe($('#mainHeader'));
+  new ResizeObserver(updateDynamicLayout).observe($('#kpis'));
+}
+
+/* ---------- Campus Switching (Two Cities) ---------- */
+function switchCampus(mode) {
+  campusMode = mode;
+  $('#btnMonitorCity').setAttribute('aria-pressed', mode === 'monitor');
+  $('#btnBuilderCity').setAttribute('aria-pressed', mode === 'builder');
+
+  $('#toolFilter').style.display = mode === 'monitor' ? 'inline-flex' : 'none';
+  $('#metricFilter').style.display = mode === 'monitor' ? 'inline-flex' : 'none';
+
+  cityRoot.visible = (mode === 'monitor');
+  builderRoot.visible = (mode === 'builder');
+
+  // Reset selection
+  select(null);
+  selectBuilder(null);
+
+  goal.t.set(0, 2, 0);
+  goal.z = DEFAULT_ZOOM;
+  isAnimatingToGoal = true;
+
+  resize();
+  renderSide();
+  renderLabels();
+}
+$('#btnMonitorCity').onclick = () => switchCampus('monitor');
+$('#btnBuilderCity').onclick = () => switchCampus('builder');
+$('#brandLogo').onclick = () => { goal.t.set(0, 2, 0); goal.z = DEFAULT_ZOOM; isAnimatingToGoal = true; };
+
+/* ---------- Selection & Inspector Panels ---------- */
+const state = { selected: null, selectedBuilder: null, hover: null };
+
 function renderPanel() {
   const P = $('#panel');
+  if (campusMode === 'builder') {
+    if (state.selectedBuilder == null) { P.classList.remove('open'); return; }
+    const s = BUILDER_STAGES[state.selectedBuilder];
+    P.innerHTML = `
+      <div class="head"><h2>${esc(s.title)}</h2><button class="close" aria-label="Close">×</button></div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <span class="fam" style="background:var(--lot);color:var(--accent);">● ${esc(s.tag)}</span>
+        <span class="fam" style="background:var(--lot);color:var(--dim);">${esc(s.tool)}</span>
+      </div>
+      <div class="grid2">
+        <div><b>${esc(s.model)}</b><span>Recommended Model</span></div>
+        <div><b>${esc(s.budget.split(' ')[0])}</b><span>Token Budget</span></div>
+      </div>
+      <p style="font-size:12px;color:var(--dim);line-height:1.45;margin:8px 0;">${esc(s.summary)}</p>
+      
+      <div class="sec">
+        <h4><span>Prompt Template</span><button class="copy-btn" id="copyPromptBtn">📋 Copy Prompt</button></h4>
+        <div class="prompt-box" id="promptText">${esc(s.prompt)}</div>
+      </div>
+
+      <div class="sec">
+        <h4>Pre-Flight Review Checklist</h4>
+        <div style="font-size:12px;display:grid;gap:6px;margin-top:6px;">
+          ${s.checklist.map(item => `<label style="display:flex;gap:8px;align-items:center;"><input type="checkbox"> <span>${esc(item)}</span></label>`).join('')}
+        </div>
+      </div>
+
+      <div class="sec">
+        <h4>Common Pitfalls</h4>
+        <div style="font-size:12px;color:#B45309;background:#FFFBEB;padding:8px 10px;border-radius:8px;border:1px solid #FDE68A;">${esc(s.mistakes)}</div>
+      </div>
+
+      <button class="enter-btn" id="openPlaybookBtn" style="margin-top:14px;">📖 View Full Playbook Step</button>
+    `;
+
+    P.querySelector('.close').onclick = () => selectBuilder(null);
+    P.querySelector('#copyPromptBtn').onclick = () => {
+      navigator.clipboard.writeText(s.prompt);
+      P.querySelector('#copyPromptBtn').textContent = '✅ Copied!';
+      setTimeout(() => { const b = P.querySelector('#copyPromptBtn'); if (b) b.textContent = '📋 Copy Prompt'; }, 2000);
+    };
+    P.querySelector('#openPlaybookBtn').onclick = () => {
+      openPlaybookModal(s.id + 1);
+    };
+    P.classList.add('open');
+    return;
+  }
+
+  // Monitor City Panel
   if (state.selected == null || viewMode === 'interior') { P.classList.remove('open'); return; }
   const p = B[state.selected].p, t = p.tokens || {}, all = sumTok(t) || 1, fam = FAMS.includes(p.family) ? p.family : 'other';
   const seg = [['input', 'Input', '--in'], ['output', 'Output', '--out'], ['cacheWrite', 'Cache write', '--cw'], ['cacheRead', 'Cache read', '--cr']];
@@ -795,7 +1437,7 @@ function renderPanel() {
     </div>
     ${p.cacheLeak ? `<div class="leak-banner">▲ <b>Cache Leak Detected</b><br>${esc(p.cacheLeakReason || 'Frequent context invalidation is ballooning spend.')}</div>` : ''}
     <div class="grid2">
-      <div><b>${money(p.costUSD || 0)}</b><span>API-equivalent</span></div>
+      <div><b>${money(p.costUSD || 0)}</b><span>API Spend</span></div>
       <div><b>${big(all)}</b><span>Tokens</span></div>
       <div><b>${hrs(p.activeHours || 0)}</b><span>Active time</span></div>
       <div><b>${hitRatePct}%</b><span>Cache hit rate</span></div>
@@ -814,7 +1456,486 @@ function renderPanel() {
   P.classList.add('open');
 }
 
-/* ---------- View Mode Transitions (City vs Interior) ---------- */
+function select(idx) {
+  state.selected = idx;
+  B.forEach((b, i) => {
+    b.selRing.visible = (i === idx);
+  });
+  if (idx != null) {
+    const b = B[idx];
+    goal.t.set(b.g.position.x, 2, b.g.position.z);
+    goal.z = 1.6;
+  } else {
+    goal.t.set(0, 2, 0);
+    goal.z = DEFAULT_ZOOM;
+  }
+  isAnimatingToGoal = true;
+  renderPanel();
+  renderLabels();
+}
+
+function selectBuilder(id) {
+  state.selectedBuilder = id;
+  builderPavilions.forEach(bp => {
+    bp.selRing.visible = (bp.s.id === id);
+  });
+  if (id != null) {
+    const bp = builderPavilions.find(p => p.s.id === id);
+    if (bp) {
+      goal.t.set(bp.x, 2, bp.z);
+      goal.z = 1.6;
+    }
+  } else {
+    goal.t.set(0, 2, 0);
+    goal.z = DEFAULT_ZOOM;
+  }
+  isAnimatingToGoal = true;
+  renderPanel();
+  renderLabels();
+}
+window.selectBuilderById = selectBuilder;
+
+/* ---------- Interior Room Cutaways (Architectural Digital Twin) ---------- */
+const INTM = {
+  lawn: new THREE.MeshStandardMaterial({ color: 0x3E6B3E, roughness: 0.85 }),
+  deck: new THREE.MeshStandardMaterial({ color: 0x9B724D, roughness: 0.75 }),
+  parquet: new THREE.MeshStandardMaterial({ color: 0xC89D7C, roughness: 0.4 }),
+  tile: new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.35 }),
+  rug: new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.95 }),
+  wall: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.7 }),
+  wallDark: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.6 }),
+  sofa: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 }),
+  sofaCushion: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7 }),
+  leather: new THREE.MeshStandardMaterial({ color: 0xC27838, roughness: 0.55 }),
+  wood: new THREE.MeshStandardMaterial({ color: 0xB47A46, roughness: 0.5 }),
+  chair: new THREE.MeshStandardMaterial({ color: 0x1E222D, roughness: 0.6 }),
+  cabinet: new THREE.MeshStandardMaterial({ color: 0xDCE3EB, roughness: 0.4 }),
+  counter: new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.2, metalness: 0.2 }),
+  steel: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.4, metalness: 0.6 }),
+  tv: new THREE.MeshStandardMaterial({ color: 0x0B0F19, roughness: 0.2 }),
+  tvGlow: new THREE.MeshBasicMaterial({ color: 0x60A5FA }),
+  pendantGlow: new THREE.MeshStandardMaterial({ color: 0xFFFBEB, emissive: 0xFDE047, emissiveIntensity: 1.5, roughness: 0.2 }),
+  stripGlow: new THREE.MeshStandardMaterial({ color: 0xFFEDD5, emissive: 0xFB923C, emissiveIntensity: 1.2, roughness: 0.2 }),
+  umbrella: new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.5 }),
+  leaf: new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.65 }),
+  cyanRing: new THREE.MeshBasicMaterial({ color: 0x38BDF8 }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x93C5FD, transparent: true, opacity: 0.4, roughness: 0.1, depthWrite: false }),
+  stepGlow: new THREE.MeshStandardMaterial({ color: 0xFEF08A, emissive: 0xEAB308, emissiveIntensity: 0.8, roughness: 0.3 })
+};
+
+const INTERIOR_ROOMS = [
+  { id: 'lounge', name: 'AI Lounge', icon: '🛋️', x: -2.8, y: 1.8, z: -0.6, desc: 'Sectional couch, 4K monitor, prompt cache streaming', stat: '98% Cache Hit' },
+  { id: 'warroom', name: 'War Room', icon: '📊', x: -2.4, y: 1.8, z: 2.4, desc: 'Solid oak conference table, 6 dev seats, model advisor routing', stat: 'Claude 3.7 Sonnet' },
+  { id: 'kitchen', name: 'Coffee Hub', icon: '☕', x: 1.6, y: 1.8, z: -2.5, desc: 'Kitchen island, espresso bar, under-cabinet warm LEDs', stat: '4.2h Active Pacing' },
+  { id: 'office', name: 'Dev Office', icon: '💻', x: 4.8, y: 1.8, z: 2.2, desc: 'Executive workstation, dual monitors, git secret pre-commit guard', stat: '24 Tool Calls/m' },
+  { id: 'server', name: 'Server Bay', icon: '⚡', x: 4.8, y: 1.8, z: -2.0, desc: 'Hardware rack, server blades, 4 MCP tool schemas', stat: '480 Tokens Tool Schema' },
+  { id: 'terrace', name: 'Garden Terrace', icon: '🌿', x: -8.0, y: 1.4, z: 1.2, desc: 'Outdoor slatted wood deck, patio umbrella, zero-waste streak', stat: 'Grade A (90/100)' }
+];
+let selectedInteriorRoom = null;
+let interiorPills = [];
+
+function focusInteriorRoom(idx) {
+  selectedInteriorRoom = idx;
+  if (idx == null) {
+    goal.t.set(0.5, 0.8, 0.2);
+    goal.z = 2.0;
+  } else {
+    const r = INTERIOR_ROOMS[idx];
+    goal.t.set(r.x, 0.8, r.z);
+    goal.z = 2.9;
+  }
+  isAnimatingToGoal = true;
+  renderLabels();
+  if (interiorProjectIdx != null && B[interiorProjectIdx]) {
+    renderInteriorPanel(B[interiorProjectIdx].p);
+  }
+}
+window.focusInteriorRoomById = focusInteriorRoom;
+
+function renderInteriorPanel(p) {
+  const P = $('#panel');
+  const t = p.tokens || {}, all = sumTok(t) || 1;
+  const hitRatePct = ((p.cacheHitRate || 0) * 100).toFixed(1);
+
+  P.innerHTML = `
+    <div class="head">
+      <div>
+        <h2 style="font-size:18px;">${esc(p.name)}</h2>
+        <span style="font-size:11px;color:var(--dim);text-transform:uppercase;font-weight:700;">🏠 Architectural Digital Twin</span>
+      </div>
+      <button class="close" id="closeInteriorPanel" aria-label="Close">×</button>
+    </div>
+
+    <div class="grid2" style="margin:12px 0;">
+      <div><b>${money(p.costUSD || 0)}</b><span>API Spend</span></div>
+      <div><b>${hitRatePct}%</b><span>Cache Hit Rate</span></div>
+      <div><b>${big(all)}</b><span>Total Tokens</span></div>
+      <div><b>${hrs(p.activeHours || 0)}</b><span>Active Time</span></div>
+    </div>
+
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">
+      <button class="pill" style="cursor:pointer;background:${selectedInteriorRoom == null ? 'var(--accent)' : 'var(--card)'};color:${selectedInteriorRoom == null ? '#fff' : 'var(--ink)'};" onclick="focusInteriorRoom(null)">All Rooms</button>
+      ${INTERIOR_ROOMS.map((r, i) => `
+        <button class="pill" style="cursor:pointer;background:${selectedInteriorRoom === i ? 'var(--accent)' : 'var(--card)'};color:${selectedInteriorRoom === i ? '#fff' : 'var(--ink)'};" onclick="focusInteriorRoom(${i})">
+          ${esc(r.icon)} ${esc(r.name)}
+        </button>
+      `).join('')}
+    </div>
+
+    <div style="display:grid;gap:8px;">
+      ${INTERIOR_ROOMS.map((r, i) => `
+        <div style="background:var(--card);border:1.5px solid ${selectedInteriorRoom === i ? 'var(--accent)' : 'var(--line)'};border-radius:10px;padding:10px;cursor:pointer;transition:border-color .15s ease;" onclick="focusInteriorRoom(${i})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <b style="font-size:13px;display:flex;align-items:center;gap:6px;">${esc(r.icon)} ${esc(r.name)}</b>
+            <span class="pill" style="font-size:10px;background:var(--lot);">${esc(r.stat)}</span>
+          </div>
+          <p style="margin:4px 0 0;font-size:11px;color:var(--dim);line-height:1.4;">${esc(r.desc)}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <button class="enter-btn" id="exitToCampusBtn" style="margin-top:14px;background:var(--card);color:var(--accent);border:1.5px solid var(--accent);">← Back to AppTrack Town</button>
+  `;
+
+  P.querySelector('#closeInteriorPanel').onclick = () => P.classList.remove('open');
+  P.querySelector('#exitToCampusBtn').onclick = exitBuilding;
+  P.classList.add('open');
+}
+
+function createCutawayPerson(cfg) {
+  const g = new THREE.Group();
+  g.position.set(cfg.x, cfg.y || 0.05, cfg.z);
+  if (cfg.rotY) g.rotation.y = cfg.rotY;
+
+  const coatMat = new THREE.MeshStandardMaterial({ color: cfg.coatColor || '#2563EB', roughness: .6 });
+  const pantsMat = new THREE.MeshStandardMaterial({ color: cfg.pantsColor || '#1E293B', roughness: .8 });
+  const hairMat = new THREE.MeshStandardMaterial({ color: cfg.hairColor || '#0F172A', roughness: .9 });
+
+  let head, armL, armR, leg1, leg2;
+
+  if (cfg.pose === 'seated') {
+    box(0.09, 0.09, 0.22, pantsMat, -0.06, 0.42, 0.10, g);
+    box(0.09, 0.09, 0.22, pantsMat, 0.06, 0.42, 0.10, g);
+    leg1 = box(0.09, 0.36, 0.09, pantsMat, -0.06, 0.20, 0.21, g);
+    leg2 = box(0.09, 0.36, 0.09, pantsMat, 0.06, 0.20, 0.21, g);
+    box(0.24, 0.32, 0.16, coatMat, 0, 0.62, 0, g);
+    head = box(0.16, 0.16, 0.16, M.personSkin, 0, 0.86, 0, g);
+    box(0.17, 0.07, 0.17, hairMat, 0, 0.93, 0, g);
+    armL = box(0.07, 0.24, 0.07, coatMat, -0.15, 0.60, 0.04, g);
+    armR = box(0.07, 0.24, 0.07, coatMat, 0.15, 0.60, 0.04, g);
+
+    if (cfg.laptop) {
+      box(0.24, 0.02, 0.18, INTM.steel, 0, 0.48, 0.15, g);
+      const scr = box(0.24, 0.16, 0.02, INTM.tv, 0, 0.56, 0.24, g);
+      scr.rotation.x = -0.2;
+      const glow = box(0.22, 0.14, 0.01, INTM.tvGlow, 0, 0.56, 0.23, g);
+      glow.rotation.x = -0.2;
+      armL.rotation.x = -0.6;
+      armR.rotation.x = -0.6;
+    } else if (cfg.tablet) {
+      box(0.16, 0.01, 0.22, INTM.tvGlow, 0, 0.52, 0.14, g).rotation.x = -0.4;
+      armL.rotation.x = -0.5;
+      armR.rotation.x = -0.5;
+    } else if (cfg.cup) {
+      box(0.06, 0.08, 0.06, M.coffeeCup, 0.18, 0.50, 0.10, g);
+      armR.rotation.x = -0.7;
+    }
+  } else {
+    leg1 = box(0.09, 0.38, 0.09, pantsMat, -0.06, 0.20, 0, g);
+    leg2 = box(0.09, 0.38, 0.09, pantsMat, 0.06, 0.20, 0, g);
+    box(0.24, 0.34, 0.16, coatMat, 0, 0.55, 0, g);
+    head = box(0.16, 0.16, 0.16, M.personSkin, 0, 0.80, 0, g);
+    box(0.17, 0.07, 0.17, hairMat, 0, 0.87, 0, g);
+    armL = box(0.07, 0.26, 0.07, coatMat, -0.15, 0.52, 0, g);
+    armR = box(0.07, 0.26, 0.07, coatMat, 0.15, 0.52, 0, g);
+
+    if (cfg.cup) {
+      box(0.06, 0.08, 0.06, M.coffeeCup, 0.18, 0.50, 0.10, g);
+      armR.rotation.x = -0.7;
+    } else if (cfg.tablet) {
+      box(0.16, 0.01, 0.22, INTM.tvGlow, 0, 0.52, 0.14, g).rotation.x = -0.4;
+      armL.rotation.x = -0.5;
+      armR.rotation.x = -0.5;
+    }
+  }
+
+  interiorRoot.add(g);
+  const workerObj = {
+    group: g, head, armL, armR, leg1, leg2,
+    type: cfg.type || 'idle',
+    pose: cfg.pose,
+    seed: Math.random() * 10,
+    speed: cfg.speed || (0.5 + Math.random() * 0.3),
+    t: Math.random(),
+    range: cfg.walkRange || 1.0,
+    baseX: cfg.x,
+    baseZ: cfg.z
+  };
+  cutawayWorkers.push(workerObj);
+  return workerObj;
+}
+
+function buildInteriorCutaway(project) {
+  while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
+  interiorPills.forEach(el => el.remove()); interiorPills = [];
+
+  // 1. Lush Green Lawn Base
+  box(24, 0.4, 20, INTM.lawn, 0, -0.2, 0, interiorRoot);
+
+  // 4 Decorative Low-Poly Shrubs on Lawn
+  const shrubGeo = new THREE.DodecahedronGeometry(0.55);
+  const shrubPositions = [
+    [-10, 0.45, -7], [10, 0.45, -7], [10, 0.45, 7], [-4.5, 0.45, -7]
+  ];
+  shrubPositions.forEach(([sx, sy, sz]) => {
+    const sh = new THREE.Mesh(shrubGeo, INTM.leaf);
+    sh.position.set(sx, sy, sz); sh.castShadow = true; interiorRoot.add(sh);
+  });
+
+  // 2. Outdoor Terrace Deck (slatted wood patio on left)
+  box(6.5, 0.08, 6.8, INTM.deck, -8.0, 0.04, 1.2, interiorRoot);
+  for (let dz = -1.8; dz <= 4.2; dz += 0.6) {
+    box(6.3, 0.02, 0.04, INTM.steel, -8.0, 0.09, dz, interiorRoot);
+  }
+  // Outdoor patio table & 4 chairs
+  box(1.6, 0.06, 1.1, INTM.wood, -8.0, 0.72, 1.2, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -8.6, 0.35, 0.8, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -7.4, 0.35, 0.8, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -8.6, 0.35, 1.6, interiorRoot);
+  box(0.08, 0.68, 0.08, INTM.steel, -7.4, 0.35, 1.6, interiorRoot);
+  const chairPos = [
+    [-8.0, 0.25, 0.4], [-8.0, 0.25, 2.0], [-9.0, 0.25, 1.2], [-7.0, 0.25, 1.2]
+  ];
+  chairPos.forEach(([cx, cy, cz]) => {
+    box(0.45, 0.05, 0.45, INTM.chair, cx, 0.42, cz, interiorRoot);
+    box(0.45, 0.45, 0.06, INTM.chair, cx, 0.65, cz + (cz < 1.2 ? -0.2 : 0.2), interiorRoot);
+    box(0.06, 0.4, 0.06, INTM.steel, cx - 0.18, 0.2, cz - 0.18, interiorRoot);
+    box(0.06, 0.4, 0.06, INTM.steel, cx + 0.18, 0.2, cz + 0.18, interiorRoot);
+  });
+
+  // Outdoor White Patio Parasol Umbrella
+  box(0.08, 2.2, 0.08, INTM.steel, -1.5, 1.1, 7.0, interiorRoot);
+  const umbrellaCone = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 1.6, 0.6, 8), INTM.umbrella);
+  umbrellaCone.position.set(-1.5, 2.0, 7.0); umbrellaCone.castShadow = true; interiorRoot.add(umbrellaCone);
+
+  // Garden Stepping Stone Walkway
+  box(1.2, 0.04, 5.0, INTM.tile, 0.5, 0.02, 5.5, interiorRoot);
+  [[-0.2, 0.2, 5.0], [1.2, 0.2, 6.5]].forEach(([bx, by, bz]) => {
+    box(0.1, 0.4, 0.1, INTM.steel, bx, by, bz, interiorRoot);
+    box(0.12, 0.1, 0.12, INTM.pendantGlow, bx, by + 0.25, bz, interiorRoot);
+  });
+
+  // 3. Interior Room Floors
+  // Living Room & Dining (Warm Parquet Wood)
+  box(5.5, 0.06, 7.3, INTM.parquet, -2.75, 0.03, 0.15, interiorRoot);
+  // Navy Area Rug in Lounge
+  box(3.2, 0.02, 2.6, INTM.rug, -2.8, 0.07, -0.6, interiorRoot);
+
+  // Kitchen & Hallway (Ceramic Tile)
+  box(3.2, 0.06, 4.0, INTM.tile, 1.6, 0.03, -1.5, interiorRoot);
+  box(3.2, 0.06, 3.3, INTM.tile, 1.6, 0.03, 2.15, interiorRoot);
+
+  // Engineering Office (Parquet Wood)
+  box(3.3, 0.06, 3.3, INTM.parquet, 4.85, 0.03, 2.15, interiorRoot);
+
+  // Hardware / Server Bay (Dark Slate)
+  box(3.3, 0.06, 4.0, INTM.wallDark, 4.85, 0.03, -1.5, interiorRoot);
+
+  // 4. Perimeter & Dividing Cutaway Walls (Height 1.8, Thickness 0.22)
+  // Back Wall
+  box(12.0, 1.8, 0.22, INTM.wall, 0.5, 0.9, -3.65, interiorRoot);
+  box(1.8, 0.9, 0.04, INTM.glass, -2.5, 1.1, -3.65, interiorRoot);
+  box(1.8, 0.9, 0.04, INTM.glass, 4.85, 1.1, -3.65, interiorRoot);
+
+  // Left Wall (Living Room to Terrace)
+  box(0.22, 1.8, 7.3, INTM.wall, -5.5, 0.9, 0.15, interiorRoot);
+  box(0.04, 1.4, 2.2, INTM.glass, -5.5, 0.75, 1.5, interiorRoot);
+
+  // Right Wall
+  box(0.22, 1.8, 7.3, INTM.wall, 6.5, 0.9, 0.15, interiorRoot);
+
+  // Front Walls with Entrance opening at x ≈ 0.5
+  box(5.5, 1.8, 0.22, INTM.wall, -2.75, 0.9, 3.8, interiorRoot);
+  box(3.3, 1.8, 0.22, INTM.wall, 4.85, 0.9, 3.8, interiorRoot);
+
+  // Interior Dividing Walls
+  box(0.22, 1.8, 3.2, INTM.wall, 0.0, 0.9, 2.2, interiorRoot);
+  box(0.22, 1.8, 4.0, INTM.wall, 3.2, 0.9, -1.5, interiorRoot);
+  box(0.22, 1.8, 3.3, INTM.wall, 3.2, 0.9, 2.15, interiorRoot);
+  box(3.3, 1.8, 0.22, INTM.wall, 4.85, 0.9, 0.5, interiorRoot);
+
+  // 5. Room 1: AI Developer Lounge Props
+  box(2.4, 0.45, 0.85, INTM.sofa, -2.6, 0.25, -0.2, interiorRoot);
+  box(0.85, 0.45, 1.4, INTM.sofa, -4.1, 0.25, 0.4, interiorRoot);
+  box(2.4, 0.45, 0.22, INTM.sofaCushion, -2.6, 0.65, -0.55, interiorRoot);
+  box(0.22, 0.35, 1.4, INTM.sofaCushion, -4.45, 0.55, 0.4, interiorRoot);
+  box(1.2, 0.3, 0.6, INTM.wood, -2.6, 0.18, 0.5, interiorRoot);
+  box(0.3, 0.02, 0.22, INTM.chair, -2.6, 0.34, 0.5, interiorRoot);
+  box(0.75, 0.4, 0.75, INTM.leather, -1.1, 0.25, 0.5, interiorRoot);
+  box(0.18, 0.4, 0.75, INTM.leather, -0.75, 0.6, 0.5, interiorRoot);
+  box(0.08, 0.9, 1.8, INTM.tv, -5.35, 1.1, -0.6, interiorRoot);
+  box(0.02, 0.82, 1.72, INTM.tvGlow, -5.3, 1.1, -0.6, interiorRoot);
+  box(0.4, 0.4, 2.2, INTM.wood, -5.1, 0.22, -0.6, interiorRoot);
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.25, 0.6, 12), INTM.cabinet);
+  pot.position.set(-4.8, 0.3, 3.0); interiorRoot.add(pot);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.04, 8, 24), INTM.cyanRing);
+  ring.position.set(-4.8, 0.06, 3.0); ring.rotateX(Math.PI / 2); interiorRoot.add(ring);
+  box(0.12, 1.1, 0.12, INTM.wood, -4.8, 0.9, 3.0, interiorRoot);
+  const leaves = new THREE.Mesh(new THREE.DodecahedronGeometry(0.48), INTM.leaf);
+  leaves.position.set(-4.8, 1.5, 3.0); interiorRoot.add(leaves);
+  box(0.06, 1.6, 0.06, INTM.steel, -1.2, 0.8, -1.2, interiorRoot);
+  box(0.25, 0.2, 0.25, INTM.pendantGlow, -1.2, 1.5, -1.2, interiorRoot);
+
+  // 6. Room 2: War Room / Dining Props
+  box(2.6, 0.08, 1.2, INTM.wood, -2.4, 0.72, 2.4, interiorRoot);
+  [[-3.6, 1.8], [-1.2, 1.8], [-3.6, 3.0], [-1.2, 3.0]].forEach(([lx, lz]) => {
+    box(0.08, 0.68, 0.08, INTM.steel, lx, 0.35, lz, interiorRoot);
+  });
+  [-3.1, -2.4, -1.7].forEach(cx => {
+    box(0.42, 0.05, 0.42, INTM.chair, cx, 0.42, 1.65, interiorRoot);
+    box(0.42, 0.45, 0.06, INTM.chair, cx, 0.65, 1.45, interiorRoot);
+    box(0.42, 0.05, 0.42, INTM.chair, cx, 0.42, 3.15, interiorRoot);
+    box(0.42, 0.45, 0.06, INTM.chair, cx, 0.65, 3.35, interiorRoot);
+  });
+  [-3.0, -2.4, -1.8].forEach(px => {
+    box(0.02, 0.5, 0.02, INTM.steel, px, 1.75, 2.4, interiorRoot);
+    const pend = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), INTM.pendantGlow);
+    pend.position.set(px, 1.5, 2.4); interiorRoot.add(pend);
+  });
+
+  // 7. Room 3: Kitchen & Coffee Bar Props
+  box(3.0, 0.82, 0.65, INTM.cabinet, 1.6, 0.41, -3.2, interiorRoot);
+  box(3.05, 0.06, 0.7, INTM.counter, 1.6, 0.84, -3.2, interiorRoot);
+  box(3.0, 0.6, 0.4, INTM.cabinet, 1.6, 1.5, -3.3, interiorRoot);
+  box(2.9, 0.04, 0.08, INTM.stripGlow, 1.6, 1.18, -3.1, interiorRoot);
+  box(1.8, 0.82, 0.85, INTM.cabinet, 1.6, 0.41, -1.8, interiorRoot);
+  box(1.9, 0.06, 0.95, INTM.counter, 1.6, 0.84, -1.8, interiorRoot);
+  [1.2, 2.0].forEach(sx => {
+    box(0.06, 0.65, 0.06, INTM.steel, sx, 0.33, -1.1, interiorRoot);
+    const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12), INTM.wood);
+    seat.position.set(sx, 0.65, -1.1); interiorRoot.add(seat);
+  });
+  box(0.75, 1.7, 0.7, INTM.cabinet, -0.3, 0.85, -3.2, interiorRoot);
+
+  // 8. Room 4: Architectural Floating Open-Tread Staircase
+  for (let step = 0; step < 10; step++) {
+    const sy = 0.15 + step * 0.15;
+    const sz = 1.6 - step * 0.24;
+    box(1.1, 0.05, 0.28, INTM.wood, 1.6, sy, sz, interiorRoot);
+    box(1.05, 0.02, 0.04, INTM.stepGlow, 1.6, sy - 0.02, sz + 0.12, interiorRoot);
+  }
+  box(0.08, 1.8, 2.8, INTM.steel, 1.05, 0.9, 0.5, interiorRoot).rotateX(0.55);
+  box(0.08, 1.8, 2.8, INTM.steel, 2.15, 0.9, 0.5, interiorRoot).rotateX(0.55);
+
+  // 9. Room 5: Engineering Workstation Props
+  box(1.8, 0.72, 0.8, INTM.wood, 4.8, 0.38, 2.6, interiorRoot);
+  box(0.6, 0.72, 1.0, INTM.wood, 5.7, 0.38, 2.1, interiorRoot);
+  box(0.65, 0.38, 0.04, INTM.tv, 4.5, 0.95, 2.5, interiorRoot);
+  box(0.62, 0.34, 0.01, INTM.tvGlow, 4.5, 0.95, 2.48, interiorRoot);
+  const mon2 = box(0.65, 0.38, 0.04, INTM.tv, 5.2, 0.95, 2.5, interiorRoot);
+  mon2.rotateY(-0.25);
+  const scr2 = box(0.62, 0.34, 0.01, M.screenCode, 5.2, 0.95, 2.48, interiorRoot);
+  scr2.rotateY(-0.25);
+  box(0.5, 0.08, 0.5, INTM.chair, 4.8, 0.45, 1.8, interiorRoot);
+  box(0.5, 0.55, 0.08, INTM.chair, 4.8, 0.75, 1.55, interiorRoot);
+  box(0.08, 0.42, 0.08, INTM.steel, 4.8, 0.22, 1.8, interiorRoot);
+  box(0.35, 1.6, 1.4, INTM.cabinet, 6.2, 0.8, 1.2, interiorRoot);
+
+  // 10. Room 6: Hardware & Server Bay Props
+  box(0.8, 1.6, 0.8, INTM.wallDark, 4.8, 0.8, -3.0, interiorRoot);
+  for (let sby = 0.3; sby <= 1.4; sby += 0.2) {
+    box(0.72, 0.08, 0.04, INTM.tvGlow, 4.8, sby, -2.58, interiorRoot);
+  }
+  box(1.6, 0.8, 0.7, INTM.counter, 4.8, 0.4, -1.2, interiorRoot);
+  box(0.3, 0.2, 0.2, INTM.steel, 4.4, 0.9, -1.2, interiorRoot);
+
+  // 11. Atmospheric Point Lights
+  const light1 = new THREE.PointLight(0xF59E0B, 1.6, 8.0);
+  light1.position.set(-2.4, 1.6, 2.4); interiorRoot.add(light1);
+
+  const light2 = new THREE.PointLight(0xFB923C, 1.4, 7.0);
+  light2.position.set(1.6, 1.3, -3.0); interiorRoot.add(light2);
+
+  const light3 = new THREE.PointLight(0x60A5FA, 1.0, 7.0);
+  light3.position.set(-5.0, 1.1, -0.6); interiorRoot.add(light3);
+
+  const light4 = new THREE.PointLight(0xFDE047, 0.8, 5.5);
+  light4.position.set(0.5, 0.6, 6.0); interiorRoot.add(light4);
+
+  // 12. Animated People & Engineers Inside the Building
+  cutawayWorkers = [];
+
+  // 1. AI Lounge: Developer coding on laptop on the sectional couch
+  createCutawayPerson({
+    x: -3.0, y: 0.05, z: -0.2, rotY: 0,
+    pose: 'seated', type: 'typing', laptop: true,
+    coatColor: '#3B82F6', pantsColor: '#1E293B', hairColor: '#0F172A'
+  });
+
+  // 2. AI Lounge: Lead Reviewer in caramel armchair reading tablet
+  createCutawayPerson({
+    x: -1.1, y: 0.05, z: 0.5, rotY: -Math.PI / 2,
+    pose: 'seated', type: 'tablet', tablet: true,
+    coatColor: '#10B981', pantsColor: '#334155', hairColor: '#451A03'
+  });
+
+  // 3. War Room: System Architect at head of conference table with laptop
+  createCutawayPerson({
+    x: -2.4, y: 0.05, z: 1.65, rotY: 0,
+    pose: 'seated', type: 'talking', laptop: true,
+    coatColor: '#8B5CF6', pantsColor: '#0F172A', hairColor: '#D97706'
+  });
+
+  // 4. War Room: Engineer seated across the table in discussion
+  createCutawayPerson({
+    x: -2.4, y: 0.05, z: 3.15, rotY: Math.PI,
+    pose: 'seated', type: 'talking',
+    coatColor: '#F59E0B', pantsColor: '#1E293B', hairColor: '#1E293B'
+  });
+
+  // 5. Kitchen & Coffee Bar: Engineer brewing espresso at back counter
+  createCutawayPerson({
+    x: 1.2, y: 0.05, z: -2.6, rotY: Math.PI,
+    pose: 'standing', type: 'coffee', cup: true,
+    coatColor: '#EC4899', pantsColor: '#1E293B', hairColor: '#9A3412'
+  });
+
+  // 6. Kitchen Island: Teammate having a drink on bar stool
+  createCutawayPerson({
+    x: 2.0, y: 0.05, z: -1.1, rotY: Math.PI,
+    pose: 'seated', type: 'coffee', cup: true,
+    coatColor: '#06B6D4', pantsColor: '#334155', hairColor: '#0F172A'
+  });
+
+  // 7. Dev Office: Senior Engineer coding at dual-monitor executive desk
+  createCutawayPerson({
+    x: 4.8, y: 0.05, z: 1.8, rotY: 0,
+    pose: 'seated', type: 'typing',
+    coatColor: '#6366F1', pantsColor: '#1E293B', hairColor: '#451A03'
+  });
+
+  // 8. Server & Hardware Bay: DevOps Specialist inspecting server rack with tablet
+  createCutawayPerson({
+    x: 4.8, y: 0.05, z: -2.2, rotY: Math.PI,
+    pose: 'standing', type: 'tablet', tablet: true,
+    coatColor: '#F43F5E', pantsColor: '#0F172A', hairColor: '#1E293B'
+  });
+
+  // 9. Outdoor Garden Terrace: Engineer coding under patio parasol umbrella
+  createCutawayPerson({
+    x: -8.0, y: 0.05, z: 0.4, rotY: 0,
+    pose: 'seated', type: 'typing', laptop: true,
+    coatColor: '#14B8A6', pantsColor: '#475569', hairColor: '#D97706'
+  });
+
+  // 10. Central Hallway: Engineer walking between rooms
+  createCutawayPerson({
+    x: 1.6, y: 0.05, z: 0.5, rotY: 0,
+    pose: 'walking', type: 'walking', walkAxis: 1, walkRange: 0.9,
+    coatColor: '#F8FAFC', pantsColor: '#1E293B', hairColor: '#0F172A'
+  });
+}
+
 function enterBuilding(idx) {
   if (idx == null) return;
   interiorProjectIdx = idx;
@@ -822,8 +1943,7 @@ function enterBuilding(idx) {
   viewMode = 'interior';
 
   cityRoot.visible = false;
-  $('#labels').style.display = 'none';
-  $('#panel').classList.remove('open');
+  builderRoot.visible = false;
   $('#kpis').style.display = 'none';
   $('#legend').style.display = 'none';
   $('#days').style.display = 'none';
@@ -840,18 +1960,26 @@ function enterBuilding(idx) {
   $('#crumbStatus').style.color = isWarn ? 'var(--leak)' : 'var(--saved)';
   $('#crumbStatus').style.borderColor = isWarn ? 'var(--leakBorder)' : 'var(--saved)';
 
-  goal.t.set(0, 0, 0);
-  goal.z = 2.6;
+  $('#labels').style.display = 'block';
+  renderLabels();
+  renderInteriorPanel(project);
+
+  selectedInteriorRoom = null;
+  goal.t.set(0.5, 0.8, 0.2);
+  goal.z = 2.0;
   isAnimatingToGoal = true;
 }
 
 function exitBuilding() {
   viewMode = 'city';
   interiorRoot.visible = false;
+  while (interiorRoot.children.length > 0) interiorRoot.remove(interiorRoot.children[0]);
   interiorPills.forEach(el => el.remove()); interiorPills = [];
+  cutawayWorkers = [];
 
   $('#breadcrumbBar').style.display = 'none';
-  cityRoot.visible = true;
+  cityRoot.visible = (campusMode === 'monitor');
+  builderRoot.visible = (campusMode === 'builder');
   $('#labels').style.display = 'block';
   $('#kpis').style.display = 'grid';
   $('#legend').style.display = 'grid';
@@ -864,67 +1992,430 @@ function exitBuilding() {
 }
 $('#backBtn').onclick = exitBuilding;
 
-/* ---------- picking + camera ---------- */
+/* ---------- Raycasting & Click Handling ---------- */
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
 function hit(ev) {
-  if (viewMode !== 'city') return null;
-  const r = renderer.domElement.getBoundingClientRect(); ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -(ev.clientY - r.top) / r.height * 2 + 1);
-  ray.setFromCamera(ptr, camera); const h = ray.intersectObjects(B.map(b => b.g), true).find(x => x.object.userData.pid != null);
-  return h ? h.object.userData.pid : null;
+  const r = renderer.domElement.getBoundingClientRect();
+  ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -(ev.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+
+  if (campusMode === 'builder') {
+    const hits = ray.intersectObjects(builderRoot.children, true).find(x => x.object.userData.builderId != null);
+    return hits ? { type: 'builder', id: hits.object.userData.builderId } : null;
+  } else {
+    const hits = ray.intersectObjects(cityRoot.children, true).find(x => x.object.userData.pid != null);
+    return hits ? { type: 'monitor', id: hits.object.userData.pid } : null;
+  }
 }
+
 let down = null;
 renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; controls.autoRotate = false; });
 renderer.domElement.addEventListener('pointerup', e => {
-  if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) < 6) {
-    const clickedId = hit(e);
-    if (clickedId != null && clickedId === state.selected) {
-      enterBuilding(clickedId);
+  if (!down) return;
+  const dx = e.clientX - down[0], dy = e.clientY - down[1];
+  if (Math.hypot(dx, dy) < 6) {
+    const h = hit(e);
+    if (!h) {
+      if (campusMode === 'builder') selectBuilder(null);
+      else select(null);
+    } else if (h.type === 'builder') {
+      selectBuilder(h.id);
     } else {
-      select(clickedId);
+      select(h.id);
     }
   }
   down = null;
 });
+
 renderer.domElement.addEventListener('pointermove', e => {
-  const id = hit(e);
+  const h = hit(e);
+  const id = h ? h.id : null;
   if (id !== state.hover) {
     state.hover = id;
     renderer.domElement.style.cursor = id != null ? 'pointer' : '';
-    renderLabels();
   }
 });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (viewMode === 'interior') exitBuilding();
-    else { select(null); $('#tableModal').close(); $('#shareModal').close(); }
-  }
-  if (e.altKey && e.key.toLowerCase() === 't') openTable();
-});
 
-function select(i) {
-  state.selected = i ?? null;
-  B.forEach((b, idx) => { if (b.selRing) b.selRing.visible = idx === state.selected; });
+/* ---------- Animation Loop ---------- */
+const pPos = new THREE.Vector3();
+const clock = new THREE.Clock();
 
-  isAnimatingToGoal = true;
-  if (state.selected != null) {
-    const g = B[i].g.position;
-    goal.t.set(g.x, B[i].target * .45, g.z);
-    goal.z = 1.35;
-  } else {
-    goal.t.set(0, 2, 0);
-    goal.z = DEFAULT_ZOOM;
+function render() {
+  requestAnimationFrame(render);
+  controls.update();
+
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const time = performance.now() * 0.003;
+
+  if (isAnimatingToGoal) {
+    controls.target.lerp(goal.t, .1);
+    camera.zoom += (goal.z - camera.zoom) * .1;
+    camera.updateProjectionMatrix();
+    if (controls.target.distanceTo(goal.t) < .01 && Math.abs(camera.zoom - goal.z) < .01) {
+      controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix();
+      isAnimatingToGoal = false;
+    }
   }
-  if (reduceMotion) { controls.target.copy(goal.t); camera.zoom = goal.z; camera.updateProjectionMatrix(); isAnimatingToGoal = false; }
-  renderLabels(); renderPanel();
+
+  if (campusMode === 'monitor' && cityRoot.visible) {
+    // Animate building selection/hover pulse and beacons
+    for (const [i, b] of B.entries()) {
+      const hot = state.hover === i || state.selected === i;
+      b.mat.emissive.set(hot ? b.mat.color : 0x000000);
+      b.mat.emissiveIntensity = hot ? .25 : 0;
+      if (b.beacon && !reduceMotion) {
+        const s = 1 + .25 * Math.sin(time * 3);
+        b.beacon.scale.set(s, s, s);
+      }
+    }
+
+    if (!reduceMotion) {
+      // Busy office workers inside the buildings
+      for (const w of officeWorkers) {
+        if (!w.floor || !w.floor.visible) continue;
+        if (w.type === 'typing') {
+          w.head.rotation.x = Math.sin(time * 5 + w.seed) * 0.08;
+          w.armL.rotation.x = -0.5 + Math.sin(time * 12 + w.seed) * 0.14;
+          w.armR.rotation.x = -0.5 + Math.cos(time * 12 + w.seed) * 0.14;
+        } else if (w.type === 'walking') {
+          w.t = (w.t + w.speed * dt * 0.25) % 1;
+          const progress = Math.sin(w.t * Math.PI * 2);
+          w.group.position.x = progress * w.range;
+          w.group.rotation.y = Math.cos(w.t * Math.PI * 2) >= 0 ? Math.PI / 2 : -Math.PI / 2;
+          const legAngle = Math.sin(w.t * 24) * 0.35;
+          w.leg1.rotation.x = legAngle;
+          w.leg2.rotation.x = -legAngle;
+        } else if (w.type === 'gesturing') {
+          w.arm.rotation.x = -0.4 + Math.sin(time * 3 + w.seed) * 0.25;
+          w.head.rotation.y = Math.sin(time * 2 + w.seed) * 0.2;
+        }
+      }
+
+      // Animated Pedestrians walking along sidewalks
+      for (const pers of people) {
+        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
+        const pos = -half * .85 + pers.s * (half * 1.7);
+        if (pers.pathAxis) {
+          pers.p.position.set(pers.lane, 0, pos);
+          pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI;
+        } else {
+          pers.p.position.set(pos, 0, pers.lane);
+          pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
+        const legAngle = Math.sin(pers.s * 40) * .35;
+        pers.leg1.rotation.x = legAngle;
+        pers.leg2.rotation.x = -legAngle;
+      }
+
+      // Animated colorful Cars driving on road lanes
+      for (const c of cars) {
+        c.s = (c.s + c.v * dt * c.dir + 1) % 1;
+        const a = -half + .5 + c.s * (half * 2 - 1);
+        if (c.axis) {
+          c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a);
+          c.c.rotation.y = c.dir > 0 ? 0 : Math.PI;
+        } else {
+          c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28));
+          c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+        }
+      }
+
+      // Clouds drifting across the sky
+      const bound = half * 1.4;
+      for (const c of clouds) {
+        c.cg.position.x += c.speed * dt * 2.2;
+        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
+        if (c.cg.position.x > bound) c.cg.position.x = -bound;
+      }
+    }
+  }
+
+  if (campusMode === 'builder' && builderRoot.visible) {
+    if (!reduceMotion) {
+      // Animate central hologram crystal
+      if (holoColumn) {
+        holoColumn.rotation.y += 0.018;
+        holoColumn.position.y = 2.2 + Math.sin(time * 3) * 0.12;
+      }
+      // Animate QA scanner dome
+      if (qaDome) {
+        qaDome.rotation.y += 0.025;
+        const sc = 1 + 0.08 * Math.sin(time * 5);
+        qaDome.scale.set(sc, sc, sc);
+      }
+      // Animate ROI Citadel golden halo ring
+      if (roiHalo) {
+        roiHalo.rotation.z += 0.03;
+        roiHalo.position.y = 5.5 + Math.sin(time * 2.5) * 0.25;
+      }
+
+      // Animate DevCity Pedestrians
+      for (const pers of builderPeople) {
+        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
+        if (pers.type === 'circle') {
+          const angle = pers.s * Math.PI * 2;
+          pers.p.position.set(Math.cos(angle) * pers.radius, 0, Math.sin(angle) * pers.radius);
+          pers.p.rotation.y = pers.dir > 0 ? -angle : -angle + Math.PI;
+        } else {
+          const pos = -11 + pers.s * 22;
+          if (pers.axis) {
+            pers.p.position.set(pers.lane, 0, pos);
+            pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI;
+          } else {
+            pers.p.position.set(pos, 0, pers.lane);
+            pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          }
+        }
+        const legAngle = Math.sin(pers.s * 45) * 0.35;
+        pers.leg1.rotation.x = legAngle;
+        pers.leg2.rotation.x = -legAngle;
+      }
+
+      // Animate DevCity Campus Shuttles / Cars
+      for (const c of builderCars) {
+        c.s = (c.s + c.v * dt * c.dir + 1) % 1;
+        if (c.type === 'circle') {
+          const angle = c.s * Math.PI * 2;
+          c.c.position.set(Math.cos(angle) * c.radius, 0, Math.sin(angle) * c.radius);
+          c.c.rotation.y = c.dir > 0 ? -angle - Math.PI / 2 : -angle + Math.PI / 2;
+        } else {
+          const a = -11 + c.s * 22;
+          if (c.axis) {
+            c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a);
+            c.c.rotation.y = c.dir > 0 ? 0 : Math.PI;
+          } else {
+            c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28));
+            c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+          }
+        }
+      }
+
+      // Animate DevCity Clouds
+      for (const c of builderClouds) {
+        c.cg.position.x += c.speed * dt * 2.2;
+        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
+        if (c.cg.position.x > 18) c.cg.position.x = -18;
+      }
+    }
+  }
+
+  if (viewMode === 'interior' && interiorRoot.visible) {
+    if (!reduceMotion) {
+      for (const w of cutawayWorkers) {
+        if (w.type === 'typing') {
+          w.head.rotation.x = Math.sin(time * 5 + w.seed) * 0.08;
+          w.armL.rotation.x = -0.6 + Math.sin(time * 12 + w.seed) * 0.12;
+          w.armR.rotation.x = -0.6 + Math.cos(time * 12 + w.seed) * 0.12;
+        } else if (w.type === 'talking') {
+          w.head.rotation.y = Math.sin(time * 2 + w.seed) * 0.18;
+          w.armR.rotation.x = -0.4 + Math.sin(time * 3 + w.seed) * 0.22;
+        } else if (w.type === 'coffee') {
+          w.head.rotation.y = Math.sin(time * 1.5 + w.seed) * 0.15;
+          w.armR.rotation.x = -0.7 + Math.sin(time * 2 + w.seed) * 0.08;
+        } else if (w.type === 'tablet') {
+          w.head.rotation.x = 0.15 + Math.sin(time * 2 + w.seed) * 0.06;
+          w.head.rotation.y = Math.sin(time * 1.2 + w.seed) * 0.12;
+        } else if (w.type === 'walking') {
+          w.t = (w.t + w.speed * dt * 0.25) % 1;
+          const progress = Math.sin(w.t * Math.PI * 2);
+          w.group.position.z = w.baseZ + progress * w.range;
+          w.group.rotation.y = Math.cos(w.t * Math.PI * 2) >= 0 ? 0 : Math.PI;
+          const legAngle = Math.sin(w.t * 24) * 0.35;
+          w.leg1.rotation.x = legAngle;
+          w.leg2.rotation.x = -legAngle;
+        }
+      }
+    }
+  }
+
+  // Position floating callout tags
+  const w = innerWidth, h = innerHeight;
+  for (const [el, item] of tags) {
+    if (viewMode === 'interior') {
+      pPos.set(item.x, item.y || 1.8, item.z);
+    } else if (campusMode === 'builder') {
+      pPos.set(item.x, 3.8, item.z);
+    } else {
+      pPos.set(item.g.position.x, item.h || 3, item.g.position.z);
+    }
+    pPos.project(camera);
+    if (pPos.z > 1) { el.style.display = 'none'; continue; }
+    el.style.display = 'flex';
+    el.style.left = `${(pPos.x * .5 + .5) * w}px`;
+    el.style.top = `${(-pPos.y * .5 + .5) * h}px`;
+  }
+
+  renderer.render(scene, camera);
 }
 
-/* ---------- theme ---------- */
-function isDark() { const t = document.documentElement.dataset.theme; return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; }
+/* ---------- Modals & Guides Implementation ---------- */
+const ADVISOR_RULES = {
+  regex_grep: { tool: 'Claude Code / Shell CLI', model: 'Claude 3.5 Haiku / Flash', cost: '< $0.01', tokens: '1k - 4k', why: 'Regex and grep tasks require minimal reasoning depth; Haiku cuts costs by 80% with <800ms latency.' },
+  unit_test: { tool: 'Claude Code / Cursor', model: 'Claude 3.7 Sonnet', cost: '$0.02 - $0.06', tokens: '5k - 15k', why: 'Unit testing requires understanding parameter boundaries and reproducing mocks accurately.' },
+  ui_component: { tool: 'Cursor / Claude Code', model: 'Claude 3.7 Sonnet', cost: '$0.03 - $0.08', tokens: '8k - 20k', why: 'Precise CSS/Tailwind layouts and WCAG accessibility standards are best authored by Sonnet.' },
+  api_endpoint: { tool: 'Claude Code', model: 'Claude 3.7 Sonnet', cost: '$0.04 - $0.10', tokens: '10k - 25k', why: 'Backend endpoints require DTO validation, status code semantics, and clean service delegation.' },
+  db_migration: { tool: 'Claude Code / Antigravity', model: 'Claude 3.7 Sonnet', cost: '$0.03 - $0.08', tokens: '6k - 15k', why: 'Database schema migrations have high blast radius. AI should draft DDL, but human review is mandatory.' },
+  refactor: { tool: 'Claude Code', model: 'Claude 3.7 Sonnet', cost: '$0.06 - $0.18', tokens: '15k - 40k', why: 'Multi-file refactoring benefits from project-wide grep and prompt caching.' },
+  scaffold: { tool: 'Claude Code / Playbooks', model: 'Claude 3.7 Sonnet', cost: '$0.05 - $0.12', tokens: '12k - 30k', why: 'Scaffolding works best when following established production blueprints.' },
+  architecture_spec: { tool: 'Claude Code / Antigravity', model: 'Claude 3.7 Sonnet / Opus', cost: '$0.12 - $0.40', tokens: '25k - 60k', why: 'System design and domain boundaries require deep chain-of-thought reasoning.' }
+};
+
+function renderAdvisorCard() {
+  const t = $('#advisorTaskSelect').value;
+  const r = ADVISOR_RULES[t] || ADVISOR_RULES.api_endpoint;
+  $('#advisorResultCard').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h3 style="margin:0;font-size:16px;">Recommended: <b>${esc(r.tool)}</b></h3>
+      <span class="pill" style="font-size:11px;">Primary: ${esc(r.model)}</span>
+    </div>
+    <div class="grid2" style="margin:8px 0;">
+      <div><b>${esc(r.tokens)} tokens</b><span>Estimated Budget</span></div>
+      <div><b>${esc(r.cost)}</b><span>Estimated Cost</span></div>
+    </div>
+    <p style="font-size:12px;color:var(--dim);margin:8px 0;line-height:1.45;"><b>Why:</b> ${esc(r.why)}</p>
+  `;
+}
+$('#advisorTaskSelect').onchange = renderAdvisorCard;
+$('#advisorSizeSelect').onchange = renderAdvisorCard;
+$('#advisorDomainSelect').onchange = renderAdvisorCard;
+
+$('#advisorBtn').onclick = () => { renderAdvisorCard(); $('#advisorModal').showModal(); };
+$('#closeAdvisorBtn').onclick = () => $('#advisorModal').close();
+
+function openPlaybookModal(focusStep = null) {
+  $('#playbookContent').innerHTML = BUILDER_STAGES.map((s, idx) => `
+    <div style="background:var(--lot);border:1px solid var(--line);border-radius:12px;padding:12px;${focusStep === (idx + 1) ? 'outline:2px solid var(--accent);' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:14px;font-weight:800;">${esc(s.tag)}: ${esc(s.title)}</h3>
+        <span class="pill" style="font-size:10px;">${esc(s.model)}</span>
+      </div>
+      <p style="font-size:12px;color:var(--dim);margin:6px 0;">${esc(s.summary)}</p>
+      <div class="prompt-box" style="margin-top:6px;">${esc(s.prompt)}</div>
+      <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--dim);">Budget: ${esc(s.budget)}</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(\`${esc(s.prompt)}\`);this.textContent='✅ Copied!';setTimeout(()=>this.textContent='📋 Copy Prompt',2000)">📋 Copy Prompt</button>
+      </div>
+    </div>
+  `).join('');
+  $('#playbookModal').showModal();
+}
+$('#playbookBtn').onclick = () => openPlaybookModal();
+$('#closePlaybookBtn').onclick = () => $('#playbookModal').close();
+
+$('#auditBtn').onclick = () => {
+  $('#auditContent').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;background:var(--lot);border-radius:12px;padding:14px;border:1px solid var(--line);margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0;font-size:18px;">AI-Readiness Grade: <span style="color:var(--saved);">A (90/100)</span></h3>
+        <p style="margin:2px 0 0;font-size:12px;color:var(--dim);">Target Repository: <code>/claude-code-usage-city</code></p>
+      </div>
+      <span class="pill" style="font-size:11px;background:#ECFDF5;color:#047857;border-color:#A7F3D0;">● Optimized</span>
+    </div>
+    <div style="display:grid;gap:10px;font-size:12px;">
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;">
+        <b>ℹ️ [instructions] Project Instructions Verified</b>
+        <p style="margin:4px 0 0;color:var(--dim);">CLAUDE.md is concise (< 100 lines). Injects minimal token overhead into system context.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;">
+        <b>⚠️ [ignore_rules] Build Artifacts & Ignore Rules</b>
+        <p style="margin:4px 0 0;color:var(--dim);">Common build artifacts (dist, build, node_modules) should be verified in .gitignore to prevent AI file search bloat.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;">
+        <b>✅ [mcp] MCP Server Tool Density</b>
+        <p style="margin:4px 0 0;color:var(--dim);">4 active tool schemas detected (~480 tokens per turn). Well below the 20-tool warning threshold.</p>
+      </div>
+    </div>
+  `;
+  $('#auditModal').showModal();
+};
+$('#closeAuditBtn').onclick = () => $('#auditModal').close();
+
+// First run tour check
+$('#tourBtn').onclick = () => $('#tourModal').showModal();
+$('#closeTourBtn').onclick = () => $('#tourModal').close();
+$('#finishTourBtn').onclick = () => {
+  localStorage.setItem('devcity-tour-seen', 'true');
+  $('#tourModal').close();
+};
+if (!localStorage.getItem('devcity-tour-seen')) {
+  setTimeout(() => { $('#tourModal').showModal(); }, 600);
+}
+
+/* ---------- Table View Modal ---------- */
+$('#tableBtn').onclick = () => {
+  const container = $('#tableContainer');
+  if (campusMode === 'builder') {
+    container.innerHTML = `<table class="data-table">
+      <thead><tr><th>DevCity Stage</th><th>Pavilion Title</th><th>Recommended Model</th><th>Token Budget</th></tr></thead>
+      <tbody>${BUILDER_STAGES.map(s => `<tr><td><b>${esc(s.tag)}</b></td><td>${esc(s.title)}</td><td>${esc(s.model)}</td><td>${esc(s.budget)}</td></tr>`).join('')}</tbody>
+    </table>`;
+  } else {
+    container.innerHTML = `<table class="data-table">
+      <thead><tr><th>AppTrack Project</th><th>Model</th><th>API Spend</th><th>Tokens</th><th>Active Time</th><th>Cache Hit</th><th>Status</th></tr></thead>
+      <tbody>${data.projects.map(p => `<tr><td><b>${esc(p.name)}</b></td><td>${esc(p.family)}</td><td>${money(p.costUSD || 0)}</td><td>${big(sumTok(p.tokens || {}))}</td><td>${hrs(p.activeHours || 0)}</td><td>${((p.cacheHitRate||0)*100).toFixed(0)}%</td><td>${p.cacheLeak ? '⚠️ Leak' : '● Optimal'}</td></tr>`).join('')}</tbody>
+    </table>`;
+  }
+  $('#tableModal').showModal();
+};
+$('#closeTableBtn').onclick = () => $('#tableModal').close();
+
+/* ---------- Social Share Card Modal ---------- */
+$('#shareBtn').onclick = () => {
+  const canvas = $('#shareCardCanvas'), ctx = canvas.getContext('2d');
+  const t = data.totals || {}, allTokens = sumTok(t.tokens || {}), cacheHit = ((t.cacheHitRate || 0) * 100).toFixed(0) + '%';
+  ctx.fillStyle = '#090D1A'; ctx.fillRect(0, 0, 1200, 630);
+  try { ctx.drawImage(renderer.domElement, 380, 70, 780, 480); } catch {}
+  ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 44px Inter, sans-serif'; ctx.fillText('DevCity v3.0', 60, 90);
+  ctx.fillStyle = '#5B9BFF'; ctx.font = '600 20px Inter, sans-serif'; ctx.fillText('Personal AI Developer Cockpit & Companion', 60, 126);
+
+  const kpis = [
+    ['API Spend', money(t.costUSD || 0), '#E8ECF6'],
+    ['Total Tokens', big(allTokens), '#5B9BFF'],
+    ['Active Hours', hrs(t.activeHours || 0), '#3DDC97'],
+    ['Cache Hit Rate', cacheHit, '#F5C66B'],
+    ['Cache Savings', '+' + money(t.costSavedUSD || 0), '#10B981']
+  ];
+  let y = 175;
+  kpis.forEach(([label, val, col]) => {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.beginPath(); ctx.roundRect(60, y, 290, 65, 12); ctx.fill();
+    ctx.fillStyle = '#94A0BC'; ctx.font = 'bold 12px Inter, sans-serif'; ctx.fillText(label.toUpperCase(), 80, y + 26);
+    ctx.fillStyle = col; ctx.font = 'bold 26px Inter, sans-serif'; ctx.fillText(val, 80, y + 54);
+    y += 75;
+  });
+  $('#shareModal').showModal();
+};
+$('#closeShareBtn').onclick = () => $('#shareModal').close();
+$('#downloadCardBtn').onclick = () => {
+  const a = document.createElement('a'); a.download = 'devcity-cockpit.png'; a.href = $('#shareCardCanvas').toDataURL('image/png'); a.click();
+};
+$('#copyCardBtn').onclick = async () => {
+  $('#shareCardCanvas').toBlob(async blob => {
+    try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); alert('Copied share card to clipboard!'); } catch {}
+  });
+};
+
+/* ---------- Theme Switcher & Retheming ---------- */
+function isDark() {
+  const t = document.documentElement.getAttribute('data-theme');
+  return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 function retheme() {
   const dark = isDark();
-  for (const [m, v] of themed) m.color.set(css(v));
-  for (const b of B) b.mat.color.set(css('--' + (FAMS.includes(b.p.family) ? b.p.family : 'other')));
-  M.win.emissive.set(css('--win')); M.win.emissiveIntensity = parseFloat(css('--winGlow'));
+  for (const [m, v] of themed) {
+    const c = css(v);
+    if (c) m.color.set(c);
+  }
+  for (const b of B) {
+    const fam = FAMS.includes(b.p.family) ? b.p.family : 'other';
+    const c = css('--' + fam);
+    if (c) b.mat.color.set(c);
+  }
+  const winCol = css('--win');
+  if (winCol) M.win.emissive.set(winCol);
+  const winGlow = parseFloat(css('--winGlow'));
+  if (!isNaN(winGlow)) M.win.emissiveIntensity = winGlow;
 
   if (dark) {
     M.windowGlass.color.set(0xFFD98A);
@@ -944,227 +2435,55 @@ function retheme() {
     M.cloud.opacity = 0.85;
   }
 
-  sun.intensity = dark ? .6 : 1.45; hemi.intensity = dark ? .5 : 1.15;
+  sun.intensity = dark ? .6 : 1.45;
+  hemi.intensity = dark ? .5 : 1.15;
   if (data) { renderSide(); renderPanel(); }
 }
-$('#themeBtn').onclick = () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; try { localStorage.setItem('ucity-theme', document.documentElement.dataset.theme); } catch {} retheme(); };
-try { const t = localStorage.getItem('ucity-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
 
-/* ---------- Native <dialog> Accessible Table Modal ---------- */
-function openTable() {
-  const container = $('#tableContainer');
-  const rows = data.projects.map(p => `
-    <tr>
-      <td><b>${esc(p.name)}</b></td>
-      <td>${(p.sources || []).join(', ')}</td>
-      <td><span style="color:${css('--' + (p.family || 'other'))}">●</span> ${FAM_NAME[p.family] || 'Other'}</td>
-      <td>${money(p.costUSD || 0)}</td>
-      <td>${big(sumTok(p.tokens || {}))}</td>
-      <td>${hrs(p.activeHours || 0)}</td>
-      <td>${((p.cacheHitRate || 0) * 100).toFixed(0)}%</td>
-      <td>${p.cacheLeak ? '<span style="color:var(--leak);font-weight:700">▲ Cache Leak</span>' : '<span style="color:var(--saved)">Optimal</span>'}</td>
-    </tr>
-  `).join('');
-  container.innerHTML = `
-    <table class="data-table" role="table">
-      <thead><tr><th>Project</th><th>Sources</th><th>Model</th><th>Spend</th><th>Tokens</th><th>Hours</th><th>Cache Hit</th><th>Status</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-  const dialog = $('#tableModal');
-  dialog.showModal();
-}
-$('#tableBtn').onclick = openTable;
-$('#closeTableBtn').onclick = () => $('#tableModal').close();
-$('#tableModal').addEventListener('click', e => { if (e.target === $('#tableModal')) $('#tableModal').close(); });
-
-/* ---------- Native <dialog> Social Share Card Generator ---------- */
-function generateShareCard() {
-  const canvas = $('#shareCardCanvas');
-  const ctx = canvas.getContext('2d');
-  const t = data.totals || {};
-  const allTokens = sumTok(t.tokens || {});
-  const cacheHit = ((t.cacheHitRate || 0) * 100).toFixed(0) + '%';
-
-  const grad = ctx.createLinearGradient(0, 0, 1200, 630);
-  grad.addColorStop(0, '#090D1A'); grad.addColorStop(0.5, '#131A33'); grad.addColorStop(1, '#1E293B');
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, 1200, 630);
-
-  try { ctx.drawImage(renderer.domElement, 380, 70, 780, 480); } catch {}
-
-  ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 44px Inter, sans-serif'; ctx.fillText('DevCity', 60, 90);
-  ctx.fillStyle = '#5B9BFF'; ctx.font = '600 20px Inter, sans-serif'; ctx.fillText('Personal AI Developer Observability Cockpit', 60, 126);
-
-  const kpis = [
-    ['API Spend', money(t.costUSD || 0), '#E8ECF6'],
-    ['Total Tokens', big(allTokens), '#5B9BFF'],
-    ['Active Hours', hrs(t.activeHours || 0), '#3DDC97'],
-    ['Cache Hit Rate', cacheHit, '#F5C66B'],
-    ['Cache Savings', '+' + money(t.costSavedUSD || 0), '#10B981']
-  ];
-
-  let y = 175;
-  kpis.forEach(([label, val, col]) => {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-    ctx.beginPath(); ctx.roundRect(60, y, 290, 65, 12); ctx.fill();
-    ctx.fillStyle = '#94A0BC'; ctx.font = 'bold 12px Inter, sans-serif'; ctx.fillText(label.toUpperCase(), 80, y + 26);
-    ctx.fillStyle = col; ctx.font = 'bold 26px Inter, sans-serif'; ctx.fillText(val, 80, y + 54);
-    y += 75;
-  });
-
-  ctx.fillStyle = '#94A0BC'; ctx.font = '500 15px Inter, sans-serif';
-  ctx.fillText('100% Local & Private · github.com/sanjaydep1996/claude-code-usage-city', 60, 585);
-
-  const dialog = $('#shareModal');
-  dialog.showModal();
-}
-$('#shareBtn').onclick = generateShareCard;
-$('#closeShareBtn').onclick = () => $('#shareModal').close();
-$('#shareModal').addEventListener('click', e => { if (e.target === $('#shareModal')) $('#shareModal').close(); });
-
-$('#downloadCardBtn').onclick = () => {
-  const canvas = $('#shareCardCanvas');
-  const a = document.createElement('a'); a.download = 'devcity-snapshot.png'; a.href = canvas.toDataURL('image/png'); a.click();
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('ucity-theme', next); } catch {}
+  retheme();
 };
+try {
+  const t = localStorage.getItem('ucity-theme');
+  if (t) document.documentElement.setAttribute('data-theme', t);
+} catch {}
 
-$('#copyCardBtn').onclick = async () => {
-  const canvas = $('#shareCardCanvas');
-  try {
-    canvas.toBlob(async (blob) => {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      $('#copyCardBtn').textContent = '✓ Copied!';
-      setTimeout(() => $('#copyCardBtn').textContent = '📋 Copy to Clipboard', 2000);
-    });
-  } catch (e) { alert('Clipboard copy not supported in this browser; please use Download.'); }
-};
+/* ---------- Init ---------- */
+function getCampusRadius() {
+  if (campusMode === 'builder') {
+    return 14.0;
+  }
+  return Math.max(13.5, (half || 11.44) + 2.0);
+}
 
-/* ---------- Animation & Render Loop ---------- */
 function resize() {
-  const w = innerWidth, h = innerHeight, a = w / h, top = Math.max(half * .95, half * 1.45 / a);
-  Object.assign(camera, { left: -top * a, right: top * a, top, bottom: -top }); camera.updateProjectionMatrix(); renderer.setSize(w, h);
+  const w = innerWidth, h = innerHeight, a = w / h;
+  const R = getCampusRadius();
+  const top = Math.max(R * 1.30, (R * 2.35) / a);
+  camera.left = -top * a; camera.right = top * a; camera.top = top; camera.bottom = -top;
+  camera.updateProjectionMatrix(); renderer.setSize(w, h);
+  updateDynamicLayout();
 }
-addEventListener('resize', resize);
-const clock = new THREE.Clock(), v = new THREE.Vector3();
+window.addEventListener('resize', resize);
 
-function frame() {
-  const dt = Math.min(clock.getDelta(), .05), k = reduceMotion ? 1 : 1 - Math.pow(.015, dt);
-  if (isAnimatingToGoal) {
-    controls.target.lerp(goal.t, k);
-    camera.zoom += (goal.z - camera.zoom) * k;
-    camera.updateProjectionMatrix();
-    if (controls.target.distanceTo(goal.t) < 0.02 && Math.abs(goal.z - camera.zoom) < 0.01) {
-      controls.target.copy(goal.t);
-      camera.zoom = goal.z;
-      camera.updateProjectionMatrix();
-      isAnimatingToGoal = false;
-    }
+async function init() {
+  try {
+    data = await loadData();
+    buildCity();
+    buildBuilderCity();
+    retheme();
+    applyFilters();
+    resize();
+    render();
+  } catch (err) {
+    console.error('Failed to initialize DevCity:', err);
   }
-  controls.update();
-  const time = Date.now() * .004;
-
-  if (viewMode === 'city') {
-    for (const [i, b] of B.entries()) {
-      b.h += (b.target - b.h) * (reduceMotion ? 1 : Math.min(1, dt * 3));
-      const activeFloors = Math.max(1, Math.min(10, Math.floor(b.h / b.FH)));
-      b.floors.forEach((fl, idx) => { fl.visible = idx < activeFloors; });
-      b.roof.position.y = activeFloors * b.FH + .06;
-
-      const hot = state.hover === i || state.selected === i;
-      b.mat.emissive.set(hot ? b.mat.color : 0x000000); b.mat.emissiveIntensity = hot ? .25 : 0;
-
-      if (b.beacon && !reduceMotion) {
-        const s = 1 + .25 * Math.sin(time); b.beacon.scale.set(s, s, s);
-      }
-    }
-
-    if (!reduceMotion) {
-      // Busy office workers inside the buildings
-      for (const w of officeWorkers) {
-        if (!w.floor.visible) continue;
-        if (w.type === 'typing') {
-          w.head.rotation.x = Math.sin(time * 5 + w.seed) * 0.08;
-          w.armL.rotation.x = -0.5 + Math.sin(time * 12 + w.seed) * 0.14;
-          w.armR.rotation.x = -0.5 + Math.cos(time * 12 + w.seed) * 0.14;
-        } else if (w.type === 'walking') {
-          w.t = (w.t + w.speed * dt * 0.25) % 1;
-          const progress = Math.sin(w.t * Math.PI * 2);
-          w.group.position.x = progress * w.range;
-          w.group.rotation.y = Math.cos(w.t * Math.PI * 2) >= 0 ? Math.PI / 2 : -Math.PI / 2;
-          const legAngle = Math.sin(w.t * 24) * 0.35;
-          w.leg1.rotation.x = legAngle;
-          w.leg2.rotation.x = -legAngle;
-        } else if (w.type === 'gesturing') {
-          w.arm.rotation.x = -0.4 + Math.sin(time * 3 + w.seed) * 0.25;
-          w.head.rotation.y = Math.sin(time * 2 + w.seed) * 0.2;
-        }
-      }
-
-      for (const pers of people) {
-        pers.s = (pers.s + pers.v * dt * pers.dir + 1) % 1;
-        const pos = -half * .85 + pers.s * (half * 1.7);
-        if (pers.pathAxis) { pers.p.position.set(pers.lane, 0, pos); pers.p.rotation.y = pers.dir > 0 ? 0 : Math.PI; }
-        else { pers.p.position.set(pos, 0, pers.lane); pers.p.rotation.y = pers.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
-        const legAngle = Math.sin(pers.s * 40) * .35;
-        pers.leg1.rotation.x = legAngle; pers.leg2.rotation.x = -legAngle;
-      }
-      for (const c of cars) {
-        c.s = (c.s + c.v * dt * c.dir + 1) % 1; const a = -half + .5 + c.s * (half * 2 - 1);
-        if (c.axis) { c.c.position.set(c.lane + (c.dir > 0 ? .28 : -.28), 0, a); c.c.rotation.y = c.dir > 0 ? 0 : Math.PI; }
-        else { c.c.position.set(a, 0, c.lane + (c.dir > 0 ? -.28 : .28)); c.c.rotation.y = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
-      }
-      const bound = half * 1.4;
-      for (const c of clouds) {
-        c.cg.position.x += c.speed * dt * 2.2;
-        c.cg.position.y = c.startY + Math.sin(time * 0.5 + c.phase) * 0.2;
-        if (c.cg.position.x > bound) c.cg.position.x = -bound;
-      }
-    }
-
-    for (const [el, b] of tags) {
-      const activeFloors = Math.max(1, Math.min(10, Math.floor(b.h / b.FH)));
-      v.set(b.g.position.x, activeFloors * b.FH + .9, b.g.position.z).project(camera);
-      el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
-    }
-  } else if (viewMode === 'interior') {
-    if (!reduceMotion) {
-      for (const cw of cutawayWorkers) {
-        if (cw.type === 'typing') {
-          cw.head.rotation.x = Math.sin(time * 5 + cw.seed) * 0.08;
-          cw.armL.rotation.x = -0.5 + Math.sin(time * 12 + cw.seed) * 0.14;
-          cw.armR.rotation.x = -0.5 + Math.cos(time * 12 + cw.seed) * 0.14;
-        } else if (cw.type === 'walking') {
-          cw.t = (cw.t + cw.speed * dt * 0.3) % 1;
-          const progress = Math.sin(cw.t * Math.PI * 2);
-          cw.group.position.z = cw.baseZ + progress * cw.range;
-          cw.group.rotation.y = Math.cos(cw.t * Math.PI * 2) >= 0 ? 0 : Math.PI;
-          const legAngle = Math.sin(cw.t * 24) * 0.35;
-          cw.leg1.rotation.x = legAngle;
-          cw.leg2.rotation.x = -legAngle;
-        } else if (cw.type === 'gesturing') {
-          cw.arm.rotation.x = -0.4 + Math.sin(time * 3 + cw.seed) * 0.25;
-          cw.head.rotation.y = Math.sin(time * 2 + cw.seed) * 0.2;
-        } else if (cw.type === 'cheer') {
-          cw.armL.rotation.z = 0.8 + Math.sin(time * 6) * 0.3;
-          cw.armR.rotation.z = -0.8 - Math.sin(time * 6) * 0.3;
-        }
-      }
-    }
-    for (const pItem of interiorPillsPositions) {
-      v.copy(pItem.pos).project(camera);
-      pItem.el.style.left = ((v.x + 1) / 2 * innerWidth) + 'px';
-      pItem.el.style.top = ((1 - v.y) / 2 * innerHeight) + 'px';
-    }
-  }
-
-  renderer.render(scene, camera); requestAnimationFrame(frame);
 }
-
-/* ---------- boot ---------- */
-data = await loadData();
-buildCity(); resize(); retheme(); renderSide();
-camera.zoom = DEFAULT_ZOOM; camera.updateProjectionMatrix();
-frame();
-window.__city = { data, select, setMetric, enterBuilding, exitBuilding };
+init();
 </script>
 </body>
 </html>
